@@ -491,6 +491,12 @@
         style="width:100%;padding:0.6rem 0.9rem;border:1.5px solid #d1d5db;border-radius:8px;font-size:0.9rem;color:#111827;background:#fff;font-family:inherit;resize:vertical;"></textarea>
     </div>
 
+    <!-- Honeypot: off-screen, invisible to humans, filled by bots -->
+    <div style="position:absolute;left:-9999px;top:-9999px;width:1px;height:1px;overflow:hidden;" aria-hidden="true">
+      <label for="pmfWebsite">Website</label>
+      <input type="text" id="pmfWebsite" name="website" tabindex="-1" autocomplete="off" />
+    </div>
+
     <button type="submit" id="pmfSubmitBtn"
       style="width:100%;padding:0.85rem;background:#2563eb;color:#fff;border:none;border-radius:8px;font-size:1rem;font-weight:700;cursor:pointer;margin-top:1.8rem;transition:background 0.15s;display:flex;align-items:center;justify-content:center;gap:0.5rem;">
       <div id="pmfSpinner" style="width:18px;height:18px;border:2px solid rgba(255,255,255,0.4);border-top-color:#fff;border-radius:50%;animation:pmfSpin 0.7s linear infinite;display:none;"></div>
@@ -537,8 +543,38 @@
 
 <script>
   // ── CONFIG ────────────────────────────────────────────────────────────────
-  const PMF_WEBHOOK_URL = "/.netlify/functions/pmf";
+  const PMF_WEBHOOK_URL    = "/.netlify/functions/pmf";
+  const PMF_RATE_LIMIT     = 5;                    // max submissions per window
+  const PMF_RATE_WINDOW_MS = 24 * 60 * 60 * 1000; // 24-hour rolling window
+  const PMF_RATE_KEY       = "pmf_rate_ts";
   // ─────────────────────────────────────────────────────────────────────────
+
+  // ── Honeypot: returns true if a bot has filled the hidden field ───────────
+  function pmfIsBot() {
+    return document.getElementById("pmfWebsite").value.length > 0;
+  }
+
+  // ── Rate limiting via localStorage ───────────────────────────────────────
+  function pmfGetTimestamps() {
+    try {
+      var raw = localStorage.getItem(PMF_RATE_KEY);
+      var ts  = raw ? JSON.parse(raw) : [];
+      var now = Date.now();
+      return ts.filter(function(t) { return (now - t) < PMF_RATE_WINDOW_MS; });
+    } catch(e) { return []; }
+  }
+
+  function pmfCheckRateLimit() {
+    return pmfGetTimestamps().length < PMF_RATE_LIMIT;
+  }
+
+  function pmfRecordSubmission() {
+    try {
+      var ts = pmfGetTimestamps();
+      ts.push(Date.now());
+      localStorage.setItem(PMF_RATE_KEY, JSON.stringify(ts));
+    } catch(e) {}
+  }
 
   var pmfConRowId = 0;
 
@@ -566,6 +602,11 @@
   }
 
   function pmfAddConRow() {
+    if (document.querySelectorAll('[id^="pmfConRow_"]').length >= 20) {
+      document.getElementById("pmfErr-con").textContent = "Maximum of 20 consignments per booking. Please submit a separate request for additional consignments.";
+      document.getElementById("pmfErr-con").style.display = "block";
+      return;
+    }
     pmfConRowId++;
     var id = pmfConRowId;
     var tbody = document.getElementById("pmfConRows");
@@ -626,15 +667,13 @@
     }
   }
 
-  // Returns the minimum allowed pickup date:
-  // - If before 3PM: tomorrow (next weekday)
-  // - If at/after 3PM: day after tomorrow (next weekday), because next-day cut-off has passed
+  // Returns the minimum allowed pickup date: tomorrow, skipping weekends.
+  // The 3PM cut-off is informational (shown in the date field hint box).
   function pmfGetMinDate() {
     var now = new Date();
-    var cutoffPassed = now.getHours() >= 15;
     var min = new Date(now);
     min.setHours(0, 0, 0, 0);
-    min.setDate(min.getDate() + (cutoffPassed ? 2 : 1));
+    min.setDate(min.getDate() + 1);
     while (min.getDay() === 0 || min.getDay() === 6) {
       min.setDate(min.getDate() + 1);
     }
@@ -646,7 +685,7 @@
     return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
   }
 
-  // Live validation on date pick: blocks weekends and dates before the cut-off minimum
+  // Live validation on date pick: blocks weekends and past dates
   function pmfCheckPickupDate(input) {
     if (!input.value) return;
     var d = new Date(input.value + "T00:00:00");
@@ -661,7 +700,7 @@
     } else if (d < min) {
       input.value = "";
       input.style.borderColor = "#ef4444";
-      err.textContent = "Next-day collection cut-off is 3:00\u202FPM. The earliest available date is " + pmfDateToStr(min) + ".";
+      err.textContent = "Please select a future weekday (Monday\u2013Friday).";
       err.style.display = "block";
     } else {
       input.style.borderColor = "#d1d5db";
@@ -739,13 +778,9 @@
     var dateOk = pickupDate && selectedDate >= minDate && dayOfWeek !== 0 && dayOfWeek !== 6;
     if (!dateOk) {
       pdInput.style.borderColor = "#ef4444";
-      if (selectedDate && (dayOfWeek === 0 || dayOfWeek === 6)) {
-        pdErr.textContent = "Weekend dates are not accepted. Please select a Monday\u2013Friday.";
-      } else if (selectedDate && selectedDate < minDate) {
-        pdErr.textContent = "Next-day collection cut-off is 3:00\u202FPM. The earliest available date is " + pmfDateToStr(minDate) + ".";
-      } else {
-        pdErr.textContent = "Please select a future weekday (Monday\u2013Friday).";
-      }
+      pdErr.textContent = (selectedDate && (dayOfWeek === 0 || dayOfWeek === 6))
+        ? "Weekend dates are not accepted. Please select a Monday\u2013Friday."
+        : "Please select a future weekday (Monday\u2013Friday).";
       pdErr.style.display = "block";
       valid = false;
     } else {
@@ -759,6 +794,19 @@
   document.getElementById("pmfForm").addEventListener("submit", function(e) {
     e.preventDefault();
     pmfHideAlerts();
+
+    // Honeypot: silently fake-succeed to avoid alerting bots
+    if (pmfIsBot()) { pmfShowSuccess(); return; }
+
+    // Rate limit check
+    if (!pmfCheckRateLimit()) {
+      pmfShowErrorMsg(
+        "You have reached the maximum of " + PMF_RATE_LIMIT +
+        " submissions in a 24-hour period. Please contact the warehouse team directly if you need urgent assistance."
+      );
+      return;
+    }
+
     if (!pmfValidateForm()) return;
     pmfShowModal();
   });
@@ -854,6 +902,7 @@
       headers: { "Content-Type": "application/json" },
       body:    JSON.stringify(payload)
     }).then(function() {
+      pmfRecordSubmission();
       pmfCloseModal();
       pmfShowSuccess();
     }).catch(function() {
@@ -924,7 +973,11 @@
       return;
     }
 
-    if (bad.length > 0) {
+    if (parsed.length > 20) {
+      errDiv.textContent = "Maximum of 20 consignments per booking — " + parsed.length + " rows detected. Only the first 20 will be imported. Please submit a separate request for the remainder.";
+      errDiv.style.display = "block";
+      parsed = parsed.slice(0, 20);
+    } else if (bad.length > 0) {
       errDiv.textContent = "Skipped " + bad.length + " row(s) with missing or invalid data (lines: " + bad.join(", ") + "). Mixed value must be Y or N.";
       errDiv.style.display = "block";
     }
