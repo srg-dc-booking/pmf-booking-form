@@ -302,18 +302,19 @@
       <label style="display:block;font-size:0.875rem;font-weight:600;color:#374151;margin-bottom:0.4rem;">Pick-Up Type *</label>
       <div style="display:flex;gap:1.5rem;margin-top:0.2rem;">
         <label style="display:flex;align-items:center;gap:0.4rem;font-size:0.9rem;font-weight:500;color:#374151;cursor:pointer;">
-          <input type="radio" name="pmfPickupType" value="Direct" style="accent-color:#2563eb;cursor:pointer;" />
+          <input type="radio" name="pmfPickupType" value="Direct" style="accent-color:#2563eb;cursor:pointer;" onchange="pmfOnPickupTypeChange()" />
           Direct
         </label>
         <label style="display:flex;align-items:center;gap:0.4rem;font-size:0.9rem;font-weight:500;color:#374151;cursor:pointer;">
-          <input type="radio" name="pmfPickupType" value="Via DC" style="accent-color:#2563eb;cursor:pointer;" />
+          <input type="radio" name="pmfPickupType" value="Via DC" style="accent-color:#2563eb;cursor:pointer;" onchange="pmfOnPickupTypeChange()" />
           Via DC
         </label>
       </div>
       <div id="pmfErr-pickupType" style="font-size:0.78rem;color:#ef4444;margin-top:0.3rem;display:none;">Please select a pick-up type.</div>
     </div>
 
-    <!-- CONSIGNMENT DETAILS -->
+    <!-- CONSIGNMENT DETAILS (hidden until pickup type is selected) -->
+    <div id="pmfLowerSection" style="display:none;">
     <div style="font-size:0.8rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#6b7280;margin:1.8rem 0 1rem;">Consignment Details</div>
 
     <table id="pmfConTable" style="width:100%;border-collapse:collapse;margin-bottom:0.8rem;">
@@ -391,6 +392,7 @@
       <span id="pmfSubmitLabel">Request Pick-Up</span>
     </button>
 
+    </div><!-- /pmfLowerSection -->
   </form>
 
   <!-- SUCCESS -->
@@ -415,14 +417,26 @@
 
   var pmfConRowId = 0;
 
-  // Show pick-up type section once a state is selected
+  // Show pick-up type section once a state is selected; hide lower section and reset
   function pmfOnStateChange() {
     var state = document.getElementById("pmfState").value;
-    var section = document.getElementById("pmfPickupTypeSection");
-    section.style.display = state ? "block" : "none";
-    if (!state) {
-      var radios = document.querySelectorAll('input[name="pmfPickupType"]');
-      radios.forEach(function(r) { r.checked = false; });
+    document.getElementById("pmfPickupTypeSection").style.display = state ? "block" : "none";
+    var radios = document.querySelectorAll('input[name="pmfPickupType"]');
+    radios.forEach(function(r) { r.checked = false; });
+    document.getElementById("pmfLowerSection").style.display = "none";
+    document.getElementById("pmfConRows").innerHTML = "";
+    pmfConRowId = 0;
+    pmfUpdateSummary();
+  }
+
+  // Show consignment + date + notes + submit once a pickup type is chosen
+  function pmfOnPickupTypeChange() {
+    var lower = document.getElementById("pmfLowerSection");
+    if (lower.style.display === "none") {
+      lower.style.display = "block";
+      if (document.getElementById("pmfConRows").children.length === 0) {
+        pmfAddConRow();
+      }
     }
   }
 
@@ -702,8 +716,7 @@
     }
   })();
 
-  // Start with one empty consignment row
-  pmfAddConRow();
+  // Consignment rows are added when pickup type is first selected
 </script>
 </div>
 
