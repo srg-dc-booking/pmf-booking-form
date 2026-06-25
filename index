@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="snowflake-source" content="cortex-agent-authored" />
+  <title>Warehouse Pick-Up Booking</title>
+  <style data-snowflake-runtime-styles="1">
+    table {
+      border-collapse: collapse;
+      margin: 16px 0;
+      width: 100%;
+    }
+    th, td {
+      border: 1px solid #d1d5db;
+      padding: 6px 10px;
+      vertical-align: top;
+      text-align: left;
+    }
+    th {
+      background: #f3f4f6;
+      font-weight: 600;
+    }
+    aside.callout {
+      margin: 16px 0;
+      padding: 12px 16px;
+      border-inline-start: 4px solid #d1d5db;
+      border-radius: 0 6px 6px 0;
+      background: #f9fafb;
+    }
+    aside.callout > p:first-child { margin-top: 0; }
+    aside.callout > p:last-child { margin-bottom: 0; }
+    aside.callout-info { border-inline-start-color: #2563eb; background: #eff6ff; }
+    aside.callout-warning { border-inline-start-color: #d97706; background: #fffbeb; }
+    aside.callout-tip { border-inline-start-color: #16a34a; background: #f0fdf4; }
+    ul[data-type="taskList"] { list-style: none; padding-left: 4px; }
+    ul[data-type="taskList"] li { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 8px; margin: 4px 0; }
+    ul[data-type="taskList"] li > label { display: inline-flex; flex: 0 0 auto; margin-top: 0.35em; }
+    ul[data-type="taskList"] li > div { flex: 1 1 auto; min-width: 0; }
+    ul[data-type="taskList"] li > div > p, ul[data-type="taskList"] li > p { margin: 0; flex: 1 1 auto; min-width: 0; }
+    ul[data-type="taskList"] li > ul[data-type="taskList"] { flex: 1 0 100%; margin-inline-start: 28px; margin-block: 4px 0; }
+    ul[data-type="taskList"] li:not(:has(> label))::before { content: ""; flex: 0 0 auto; width: 14px; height: 14px; margin-top: 0.35em; border: 1.5px solid #6b7280; border-radius: 3px; background: #ffffff; }
+    ul[data-type="taskList"] li[data-checked="true"]:not(:has(> label))::before { background: #2563eb; border-color: #2563eb; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'><path fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' d='M3 7.5l3 3 5-6'/></svg>"); background-repeat: no-repeat; background-position: center; }
+    ul[data-type="taskList"] li[data-checked="true"] > div > p, ul[data-type="taskList"] li[data-checked="true"] > p { color: #6b7280; text-decoration: line-through; }
+    details { margin: 12px 0; padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 6px; background: #ffffff; }
+    details > summary { font-weight: 600; cursor: pointer; padding: 4px 0; }
+    figure { margin: 16px 0; display: flex; flex-direction: column; align-items: center; }
+    figure > figcaption { margin-top: 6px; font-size: 13px; color: #6b7280; text-align: center; font-style: italic; }
+    blockquote { border-inline-start: 3px solid #d1d5db; margin: 12px 0; padding: 4px 16px; color: #6b7280; }
+    pre { background: #f3f4f6; padding: 12px 16px; border-radius: 6px; overflow-x: auto; }
+    code { background: #f3f4f6; padding: 1px 6px; border-radius: 3px; font-family: 'SF Mono', Menlo, Consolas, monospace; font-size: 0.9em; }
+    pre > code { background: transparent; padding: 0; }
+  </style>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #f0f2f5;
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 2rem 1rem;
+    }
+    .pmf-card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.10);
+      width: 100%;
+      max-width: 680px;
+      padding: 2.5rem;
+    }
+    .pmf-logo-bar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 2rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 2px solid #e8eaed;
+    }
+    .pmf-logo-bar h1 {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: #1a1a2e;
+    }
+    .pmf-logo-bar span {
+      font-size: 0.9rem;
+      color: #6b7280;
+      font-weight: 400;
+    }
+    .pmf-section-title {
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #6b7280;
+      margin: 1.8rem 0 1rem;
+    }
+    .pmf-field {
+      margin-bottom: 1.2rem;
+    }
+    .pmf-field label {
+      display: block;
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: #374151;
+      margin-bottom: 0.4rem;
+    }
+    .pmf-field input[type="text"],
+    .pmf-field input[type="date"],
+    .pmf-field select,
+    .pmf-field textarea {
+      width: 100%;
+      padding: 0.6rem 0.9rem;
+      border: 1.5px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      color: #111827;
+      transition: border-color 0.15s;
+      background: #fff;
+      font-family: inherit;
+    }
+    .pmf-field input:focus,
+    .pmf-field select:focus,
+    .pmf-field textarea:focus {
+      outline: none;
+      border-color: #2563eb;
+      box-shadow: 0 0 0 3px rgba(37,99,235,0.12);
+    }
+    .pmf-field input.pmf-error,
+    .pmf-field select.pmf-error,
+    .pmf-field textarea.pmf-error { border-color: #ef4444; }
+    .pmf-field-error {
+      font-size: 0.78rem;
+      color: #ef4444;
+      margin-top: 0.3rem;
+      display: none;
+    }
+    .pmf-pickup-type-section {
+      display: none;
+    }
+    .pmf-con-table { width: 100%; border-collapse: collapse; margin-bottom: 0.8rem; }
+    .pmf-con-table th {
+      text-align: left;
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: #6b7280;
+      padding: 0 0.5rem 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border: none;
+      background: transparent;
+    }
+    .pmf-con-row td { padding: 0.3rem 0.4rem; vertical-align: top; border: none; background: transparent; }
+    .pmf-con-row td:first-child { width: 55%; }
+    .pmf-con-row td:nth-child(2) { width: 30%; }
+    .pmf-con-row td:last-child { width: 15%; text-align: center; padding-top: 0.5rem; }
+    .pmf-btn-remove {
+      background: none;
+      border: none;
+      color: #ef4444;
+      font-size: 1.3rem;
+      cursor: pointer;
+      line-height: 1;
+      padding: 0 0.3rem;
+      border-radius: 4px;
+      transition: background 0.15s;
+    }
+    .pmf-btn-remove:hover { background: #fee2e2; }
+    .pmf-btn-add {
+      background: #f3f4f6;
+      border: 1.5px dashed #9ca3af;
+      border-radius: 8px;
+      color: #374151;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      padding: 0.5rem 1rem;
+      width: 100%;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .pmf-btn-add:hover { background: #e5e7eb; border-color: #6b7280; }
+    .pmf-con-summary {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 0.6rem 0.9rem;
+      font-size: 0.875rem;
+      color: #475569;
+      margin-top: 0.5rem;
+    }
+    .pmf-con-summary strong { color: #1e293b; }
+    .pmf-btn-submit {
+      width: 100%;
+      padding: 0.85rem;
+      background: #2563eb;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 1.8rem;
+      transition: background 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+    .pmf-btn-submit:hover:not(:disabled) { background: #1d4ed8; }
+    .pmf-btn-submit:disabled { background: #93c5fd; cursor: not-allowed; }
+    .pmf-spinner {
+      width: 18px; height: 18px;
+      border: 2px solid rgba(255,255,255,0.4);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: pmfSpin 0.7s linear infinite;
+      display: none;
+    }
+    @keyframes pmfSpin { to { transform: rotate(360deg); } }
+    .pmf-alert {
+      border-radius: 10px;
+      padding: 1rem 1.2rem;
+      margin-top: 1.2rem;
+      font-size: 0.9rem;
+      display: none;
+    }
+    .pmf-alert-success {
+      background: #f0fdf4;
+      border: 1.5px solid #86efac;
+      color: #15803d;
+    }
+    .pmf-alert-error {
+      background: #fef2f2;
+      border: 1.5px solid #fca5a5;
+      color: #b91c1c;
+    }
+    .pmf-alert-success h3, .pmf-alert-error h3 { font-size: 0.95rem; margin-bottom: 0.4rem; }
+    .pmf-radio-group {
+      display: flex;
+      gap: 1rem;
+      margin-top: 0.2rem;
+    }
+    .pmf-radio-option {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: #374151;
+      cursor: pointer;
+    }
+    .pmf-radio-option input[type="radio"] {
+      width: auto;
+      accent-color: #2563eb;
+      cursor: pointer;
+    }
+    @media (max-width: 480px) {
+      .pmf-card { padding: 1.5rem; }
+      .pmf-radio-group { flex-direction: column; gap: 0.5rem; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="report-atomic-block" data-block-type="html" data-block-id="pmf-form-001">
+<div class="pmf-card">
+  <div class="pmf-logo-bar">
+    <div>
+      <h1 style="font-size:1.4rem;font-weight:700;color:#1a1a2e;">Warehouse Pick-Up Booking</h1>
+      <span style="font-size:0.9rem;color:#6b7280;font-weight:400;">Complete all fields and click Submit to request your pick-up</span>
+    </div>
+  </div>
+
+  <form id="pmfForm" novalidate>
+
+    <!-- VENDOR DETAILS -->
+    <div style="font-size:0.8rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#6b7280;margin:1.8rem 0 1rem;">Vendor Details</div>
+
+    <div style="margin-bottom:1.2rem;">
+      <label style="display:block;font-size:0.875rem;font-weight:600;color:#374151;margin-bottom:0.4rem;" for="pmfVendorCode">Vendor Number *</label>
+      <input type="text" id="pmfVendorCode" placeholder="e.g. 101503" autocomplete="off"
+        style="width:100%;padding:0.6rem 0.9rem;border:1.5px solid #d1d5db;border-radius:8px;font-size:0.9rem;color:#111827;background:#fff;font-family:inherit;" />
+      <div id="pmfErr-vendorCode" style="font-size:0.78rem;color:#ef4444;margin-top:0.3rem;display:none;">Please enter your vendor number.</div>
+    </div>
+
+    <!-- PICK-UP DETAILS -->
+    <div style="font-size:0.8rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#6b7280;margin:1.8rem 0 1rem;">Pick-Up Details</div>
+
+    <div style="margin-bottom:1.2rem;">
+      <label style="display:block;font-size:0.875rem;font-weight:600;color:#374151;margin-bottom:0.4rem;" for="pmfState">State *</label>
+      <select id="pmfState" onchange="pmfOnStateChange()"
+        style="width:100%;padding:0.6rem 0.9rem;border:1.5px solid #d1d5db;border-radius:8px;font-size:0.9rem;color:#111827;background:#fff;">
+        <option value="">— Select State —</option>
+        <option value="VIC">VIC</option>
+        <option value="NSW">NSW</option>
+      </select>
+      <div id="pmfErr-state" style="font-size:0.78rem;color:#ef4444;margin-top:0.3rem;display:none;">Please select a state.</div>
+    </div>
+
+    <div id="pmfPickupTypeSection" style="margin-bottom:1.2rem;display:none;">
+      <label style="display:block;font-size:0.875rem;font-weight:600;color:#374151;margin-bottom:0.4rem;">Pick-Up Type *</label>
+      <div style="display:flex;gap:1.5rem;margin-top:0.2rem;">
+        <label style="display:flex;align-items:center;gap:0.4rem;font-size:0.9rem;font-weight:500;color:#374151;cursor:pointer;">
+          <input type="radio" name="pmfPickupType" value="Direct" style="accent-color:#2563eb;cursor:pointer;" />
+          Direct
+        </label>
+        <label style="display:flex;align-items:center;gap:0.4rem;font-size:0.9rem;font-weight:500;color:#374151;cursor:pointer;">
+          <input type="radio" name="pmfPickupType" value="Via DC" style="accent-color:#2563eb;cursor:pointer;" />
+          Via DC
+        </label>
+      </div>
+      <div id="pmfErr-pickupType" style="font-size:0.78rem;color:#ef4444;margin-top:0.3rem;display:none;">Please select a pick-up type.</div>
+    </div>
+
+    <!-- CONSIGNMENT DETAILS -->
+    <div style="font-size:0.8rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#6b7280;margin:1.8rem 0 1rem;">Consignment Details</div>
+
+    <table id="pmfConTable" style="width:100%;border-collapse:collapse;margin-bottom:0.8rem;">
+      <thead>
+        <tr>
+          <th style="text-align:left;font-size:0.78rem;font-weight:700;color:#6b7280;padding:0 0.5rem 0.5rem;text-transform:uppercase;letter-spacing:0.05em;border:none;background:transparent;">Consignment Number</th>
+          <th style="text-align:left;font-size:0.78rem;font-weight:700;color:#6b7280;padding:0 0.5rem 0.5rem;text-transform:uppercase;letter-spacing:0.05em;border:none;background:transparent;">Mixed</th>
+          <th style="border:none;background:transparent;"></th>
+        </tr>
+      </thead>
+      <tbody id="pmfConRows"></tbody>
+    </table>
+
+    <div id="pmfErr-con" style="font-size:0.78rem;color:#ef4444;margin-bottom:0.5rem;display:none;">Please add at least one consignment.</div>
+
+    <div style="display:flex;gap:0.6rem;margin-bottom:0.8rem;flex-wrap:wrap;">
+      <button type="button" onclick="pmfAddConRow()"
+        style="flex:1;background:#f3f4f6;border:1.5px dashed #9ca3af;border-radius:8px;color:#374151;font-size:0.875rem;font-weight:600;cursor:pointer;padding:0.5rem 1rem;transition:background 0.15s;">
+        + Add Consignment
+      </button>
+      <button type="button" onclick="pmfToggleBulk()"
+        style="flex:1;background:#f3f4f6;border:1.5px dashed #9ca3af;border-radius:8px;color:#374151;font-size:0.875rem;font-weight:600;cursor:pointer;padding:0.5rem 1rem;transition:background 0.15s;">
+        &#128203; Paste from Spreadsheet
+      </button>
+    </div>
+
+    <!-- Bulk paste panel -->
+    <div id="pmfBulkPanel" style="display:none;background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:8px;padding:1rem;margin-bottom:0.8rem;">
+      <label style="font-size:0.8rem;font-weight:700;color:#374151;display:block;margin-bottom:0.4rem;">
+        Paste two columns from Excel (Consignment Number + Mixed Y/N), or type one per line: <code>consignment,Y</code>
+      </label>
+      <textarea id="pmfBulkText"
+        rows="6"
+        placeholder="CON001&#9;Y&#10;CON002&#9;N&#10;CON003&#9;Y"
+        style="width:100%;font-family:monospace;font-size:0.85rem;padding:0.5rem 0.8rem;border:1.5px solid #d1d5db;border-radius:6px;resize:vertical;color:#111827;background:#fff;"></textarea>
+      <div id="pmfBulkError" style="color:#ef4444;font-size:0.78rem;margin-top:0.3rem;display:none;"></div>
+      <div style="display:flex;gap:0.5rem;margin-top:0.6rem;">
+        <button type="button" onclick="pmfImportBulk()"
+          style="background:#2563eb;color:#fff;border:none;border-radius:6px;padding:0.45rem 1rem;font-size:0.875rem;font-weight:600;cursor:pointer;">
+          Import Rows
+        </button>
+        <button type="button" onclick="pmfToggleBulk()"
+          style="background:#f3f4f6;color:#374151;border:1.5px solid #d1d5db;border-radius:6px;padding:0.45rem 1rem;font-size:0.875rem;font-weight:600;cursor:pointer;">
+          Cancel
+        </button>
+      </div>
+    </div>
+
+    <div id="pmfConSummary" style="display:none;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:0.6rem 0.9rem;font-size:0.875rem;color:#475569;margin-top:0.5rem;">
+      Total: <strong id="pmfTotalCons">0</strong> consignment(s) — <strong id="pmfMixedCount">0</strong> mixed
+    </div>
+
+    <!-- REQUESTED PICK-UP DATE -->
+    <div style="font-size:0.8rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#6b7280;margin:1.8rem 0 1rem;">Requested Pick-Up Date</div>
+
+    <div style="margin-bottom:1.2rem;">
+      <label style="display:block;font-size:0.875rem;font-weight:600;color:#374151;margin-bottom:0.4rem;" for="pmfPickupDate">Pick-Up Date *</label>
+      <input type="date" id="pmfPickupDate"
+        style="width:100%;padding:0.6rem 0.9rem;border:1.5px solid #d1d5db;border-radius:8px;font-size:0.9rem;color:#111827;background:#fff;" />
+      <div id="pmfErr-pickupDate" style="font-size:0.78rem;color:#ef4444;margin-top:0.3rem;display:none;">Please select a future date.</div>
+    </div>
+
+    <!-- NOTES & INSTRUCTIONS -->
+    <div style="font-size:0.8rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#6b7280;margin:1.8rem 0 1rem;">Notes &amp; Instructions</div>
+
+    <div style="margin-bottom:1.2rem;">
+      <label style="display:block;font-size:0.875rem;font-weight:600;color:#374151;margin-bottom:0.4rem;" for="pmfNotes">Important Notes / Specific Instructions</label>
+      <textarea id="pmfNotes" rows="4" placeholder="Enter any special handling requirements, access instructions, or other relevant notes..."
+        style="width:100%;padding:0.6rem 0.9rem;border:1.5px solid #d1d5db;border-radius:8px;font-size:0.9rem;color:#111827;background:#fff;font-family:inherit;resize:vertical;"></textarea>
+    </div>
+
+    <button type="submit" id="pmfSubmitBtn"
+      style="width:100%;padding:0.85rem;background:#2563eb;color:#fff;border:none;border-radius:8px;font-size:1rem;font-weight:700;cursor:pointer;margin-top:1.8rem;transition:background 0.15s;display:flex;align-items:center;justify-content:center;gap:0.5rem;">
+      <div id="pmfSpinner" style="width:18px;height:18px;border:2px solid rgba(255,255,255,0.4);border-top-color:#fff;border-radius:50%;animation:pmfSpin 0.7s linear infinite;display:none;"></div>
+      <span id="pmfSubmitLabel">Request Pick-Up</span>
+    </button>
+
+  </form>
+
+  <!-- SUCCESS -->
+  <div id="pmfAlertSuccess" style="display:none;border-radius:10px;padding:1rem 1.2rem;margin-top:1.2rem;font-size:0.9rem;background:#f0fdf4;border:1.5px solid #86efac;color:#15803d;">
+    <h3 style="font-size:0.95rem;margin-bottom:0.4rem;">&#9989; Request Received!</h3>
+    <p>Thank you — your pick-up request has been submitted.<br>
+    You will be contacted to confirm your pick-up date and any further arrangements.<br><br>
+    If you do not receive a follow-up within 1 business day, please contact the warehouse team.</p>
+  </div>
+
+  <!-- ERROR -->
+  <div id="pmfAlertError" style="display:none;border-radius:10px;padding:1rem 1.2rem;margin-top:1.2rem;font-size:0.9rem;background:#fef2f2;border:1.5px solid #fca5a5;color:#b91c1c;">
+    <h3 style="font-size:0.95rem;margin-bottom:0.4rem;">&#9888;&#65039; Submission Not Completed</h3>
+    <div id="pmfErrorMsg"></div>
+  </div>
+</div>
+
+<script>
+  // ── CONFIG ────────────────────────────────────────────────────────────────
+  const PMF_WEBHOOK_URL = "/.netlify/functions/pmf";
+  // ─────────────────────────────────────────────────────────────────────────
+
+  var pmfConRowId = 0;
+
+  // Show pick-up type section once a state is selected
+  function pmfOnStateChange() {
+    var state = document.getElementById("pmfState").value;
+    var section = document.getElementById("pmfPickupTypeSection");
+    section.style.display = state ? "block" : "none";
+    if (!state) {
+      var radios = document.querySelectorAll('input[name="pmfPickupType"]');
+      radios.forEach(function(r) { r.checked = false; });
+    }
+  }
+
+  function pmfAddConRow() {
+    pmfConRowId++;
+    var id = pmfConRowId;
+    var tbody = document.getElementById("pmfConRows");
+    var tr = document.createElement("tr");
+    tr.className = "pmf-con-row";
+    tr.id = "pmfConRow_" + id;
+    tr.innerHTML =
+      '<td style="padding:0.3rem 0.4rem;vertical-align:top;border:none;background:transparent;">' +
+        '<input type="text" id="pmfConNum_' + id + '" placeholder="e.g. CON001234" autocomplete="off" oninput="pmfUpdateSummary()"' +
+        ' style="width:100%;padding:0.5rem 0.7rem;border:1.5px solid #d1d5db;border-radius:7px;font-size:0.88rem;color:#111827;background:#fff;font-family:inherit;" />' +
+      '</td>' +
+      '<td style="padding:0.3rem 0.4rem;vertical-align:top;border:none;background:transparent;">' +
+        '<select id="pmfConMixed_' + id + '" onchange="pmfUpdateSummary()"' +
+        ' style="width:100%;padding:0.5rem 0.7rem;border:1.5px solid #d1d5db;border-radius:7px;font-size:0.88rem;color:#111827;background:#fff;">' +
+          '<option value="">— Select —</option>' +
+          '<option value="Y">Y</option>' +
+          '<option value="N">N</option>' +
+        '</select>' +
+      '</td>' +
+      '<td style="padding:0.3rem 0.4rem;vertical-align:top;border:none;background:transparent;text-align:center;padding-top:0.5rem;">' +
+        '<button type="button" onclick="pmfRemoveConRow(' + id + ')" title="Remove"' +
+        ' style="background:none;border:none;color:#ef4444;font-size:1.3rem;cursor:pointer;line-height:1;padding:0 0.3rem;border-radius:4px;">&#215;</button>' +
+      '</td>';
+    tbody.appendChild(tr);
+    pmfUpdateSummary();
+  }
+
+  function pmfRemoveConRow(id) {
+    var row = document.getElementById("pmfConRow_" + id);
+    if (row) row.remove();
+    pmfUpdateSummary();
+  }
+
+  function pmfGetConRows() {
+    var rows = document.querySelectorAll('[id^="pmfConRow_"]');
+    var result = [];
+    rows.forEach(function(row) {
+      var idMatch = row.id.match(/pmfConRow_(\d+)/);
+      if (!idMatch) return;
+      var n = idMatch[1];
+      var con = (document.getElementById("pmfConNum_" + n) ? document.getElementById("pmfConNum_" + n).value : "").trim();
+      var mixed = document.getElementById("pmfConMixed_" + n) ? document.getElementById("pmfConMixed_" + n).value : "";
+      if (con) result.push({ consignment: con, mixed: mixed });
+    });
+    return result;
+  }
+
+  function pmfUpdateSummary() {
+    var rows = pmfGetConRows();
+    var summary = document.getElementById("pmfConSummary");
+    if (rows.length > 0) {
+      summary.style.display = "block";
+      document.getElementById("pmfTotalCons").textContent = rows.length;
+      var mixedCount = rows.filter(function(r) { return r.mixed === "Y"; }).length;
+      document.getElementById("pmfMixedCount").textContent = mixedCount;
+    } else {
+      summary.style.display = "none";
+    }
+  }
+
+  // Set min date to tomorrow (future dates only)
+  (function pmfSetDateMin() {
+    var today = new Date();
+    today.setDate(today.getDate() + 1);
+    var pad = function(n) { return String(n).padStart(2, "0"); };
+    document.getElementById("pmfPickupDate").min =
+      today.getFullYear() + "-" + pad(today.getMonth() + 1) + "-" + pad(today.getDate());
+  })();
+
+  function pmfShowFieldError(fieldId, show) {
+    var input = document.getElementById(fieldId);
+    var err = document.getElementById("pmfErr-" + fieldId.replace("pmf", "").charAt(0).toLowerCase() + fieldId.replace("pmf", "").slice(1));
+    if (!err) err = document.getElementById("pmfErr-" + fieldId);
+    if (input) {
+      if (show) {
+        input.style.borderColor = "#ef4444";
+      } else {
+        input.style.borderColor = "#d1d5db";
+      }
+    }
+    if (err) err.style.display = show ? "block" : "none";
+  }
+
+  function pmfValidateForm() {
+    var valid = true;
+
+    var vendorCode = document.getElementById("pmfVendorCode").value.trim();
+    var vcErr = document.getElementById("pmfErr-vendorCode");
+    var vcInput = document.getElementById("pmfVendorCode");
+    if (!vendorCode) {
+      vcInput.style.borderColor = "#ef4444";
+      vcErr.style.display = "block";
+      valid = false;
+    } else {
+      vcInput.style.borderColor = "#d1d5db";
+      vcErr.style.display = "none";
+    }
+
+    var state = document.getElementById("pmfState").value;
+    var stErr = document.getElementById("pmfErr-state");
+    var stInput = document.getElementById("pmfState");
+    if (!state) {
+      stInput.style.borderColor = "#ef4444";
+      stErr.style.display = "block";
+      valid = false;
+    } else {
+      stInput.style.borderColor = "#d1d5db";
+      stErr.style.display = "none";
+    }
+
+    var pickupTypeChecked = document.querySelector('input[name="pmfPickupType"]:checked');
+    var ptErr = document.getElementById("pmfErr-pickupType");
+    if (state && !pickupTypeChecked) {
+      ptErr.style.display = "block";
+      valid = false;
+    } else {
+      ptErr.style.display = "none";
+    }
+
+    var rows = pmfGetConRows();
+    var conOk = rows.length > 0 && rows.every(function(r) { return r.consignment && r.mixed; });
+    var conErr = document.getElementById("pmfErr-con");
+    conErr.style.display = conOk ? "none" : "block";
+    if (!conOk) valid = false;
+
+    var pickupDate = document.getElementById("pmfPickupDate").value;
+    var pdErr = document.getElementById("pmfErr-pickupDate");
+    var pdInput = document.getElementById("pmfPickupDate");
+    var today = new Date(); today.setHours(0,0,0,0);
+    var selectedDate = pickupDate ? new Date(pickupDate + "T00:00:00") : null;
+    var dateOk = pickupDate && selectedDate > today;
+    if (!dateOk) {
+      pdInput.style.borderColor = "#ef4444";
+      pdErr.style.display = "block";
+      valid = false;
+    } else {
+      pdInput.style.borderColor = "#d1d5db";
+      pdErr.style.display = "none";
+    }
+
+    return valid;
+  }
+
+  document.getElementById("pmfForm").addEventListener("submit", function(e) {
+    e.preventDefault();
+    pmfHideAlerts();
+    if (!pmfValidateForm()) return;
+
+    var rows = pmfGetConRows();
+    var pickupTypeEl = document.querySelector('input[name="pmfPickupType"]:checked');
+
+    var payload = {
+      vendor_code:   document.getElementById("pmfVendorCode").value.trim(),
+      state:         document.getElementById("pmfState").value,
+      pickup_type:   pickupTypeEl ? pickupTypeEl.value : "",
+      consignments:  JSON.stringify(rows),
+      pickup_date:   document.getElementById("pmfPickupDate").value,
+      notes:         document.getElementById("pmfNotes").value.trim()
+    };
+
+    pmfSetLoading(true);
+
+    fetch(PMF_WEBHOOK_URL, {
+      method:  "POST",
+      headers: { "Content-Type": "application/json" },
+      body:    JSON.stringify(payload)
+    }).then(function() {
+      pmfShowSuccess();
+    }).catch(function() {
+      pmfShowErrorMsg("Could not reach the booking service. Please check your connection and try again.");
+    }).finally(function() {
+      pmfSetLoading(false);
+    });
+  });
+
+  function pmfSetLoading(on) {
+    var btn = document.getElementById("pmfSubmitBtn");
+    var label = document.getElementById("pmfSubmitLabel");
+    var spinner = document.getElementById("pmfSpinner");
+    btn.disabled = on;
+    label.textContent = on ? "Submitting\u2026" : "Request Pick-Up";
+    spinner.style.display = on ? "block" : "none";
+  }
+
+  function pmfHideAlerts() {
+    document.getElementById("pmfAlertSuccess").style.display = "none";
+    document.getElementById("pmfAlertError").style.display   = "none";
+  }
+
+  function pmfShowSuccess() {
+    document.getElementById("pmfAlertSuccess").style.display = "block";
+    document.getElementById("pmfAlertSuccess").scrollIntoView({ behavior: "smooth" });
+    document.getElementById("pmfForm").style.display = "none";
+  }
+
+  function pmfShowErrorMsg(msg) {
+    document.getElementById("pmfErrorMsg").textContent = msg;
+    document.getElementById("pmfAlertError").style.display = "block";
+    document.getElementById("pmfAlertError").scrollIntoView({ behavior: "smooth" });
+  }
+
+  function pmfToggleBulk() {
+    var panel = document.getElementById("pmfBulkPanel");
+    var visible = panel.style.display !== "none";
+    panel.style.display = visible ? "none" : "block";
+    if (!visible) {
+      document.getElementById("pmfBulkText").value = "";
+      document.getElementById("pmfBulkError").style.display = "none";
+      document.getElementById("pmfBulkText").focus();
+    }
+  }
+
+  function pmfImportBulk() {
+    var raw = document.getElementById("pmfBulkText").value.trim();
+    var errDiv = document.getElementById("pmfBulkError");
+    errDiv.style.display = "none";
+
+    if (!raw) {
+      errDiv.textContent = "Nothing to import — please paste your data first.";
+      errDiv.style.display = "block";
+      return;
+    }
+
+    var lines = raw.split(/\r?\n/).filter(function(l) { return l.trim(); });
+    var parsed = [];
+    var bad = [];
+
+    lines.forEach(function(line, i) {
+      var parts = line.trim().split(/\t|,|;|\s{2,}/).map(function(p) { return p.trim(); }).filter(Boolean);
+      var con = parts[0] || "";
+      var mixed = (parts[1] || "").toUpperCase();
+      if (con && (mixed === "Y" || mixed === "N")) {
+        parsed.push({ consignment: con, mixed: mixed });
+      } else {
+        bad.push(i + 1);
+      }
+    });
+
+    if (parsed.length === 0) {
+      errDiv.textContent = "No valid rows found. Format should be: Consignment Number, then Y or N (tab or comma separated).";
+      errDiv.style.display = "block";
+      return;
+    }
+
+    if (bad.length > 0) {
+      errDiv.textContent = "Skipped " + bad.length + " row(s) with missing or invalid data (lines: " + bad.join(", ") + "). Mixed value must be Y or N.";
+      errDiv.style.display = "block";
+    }
+
+    document.getElementById("pmfConRows").innerHTML = "";
+    pmfConRowId = 0;
+    parsed.forEach(function(item) {
+      pmfAddConRow();
+      var n = pmfConRowId;
+      document.getElementById("pmfConNum_" + n).value = item.consignment;
+      document.getElementById("pmfConMixed_" + n).value = item.mixed;
+    });
+
+    pmfUpdateSummary();
+    if (bad.length === 0) pmfToggleBulk();
+  }
+
+  // Pre-fill vendor number from URL parameter e.g. ?vendor=101503
+  (function pmfPrefillFromUrl() {
+    var params = new URLSearchParams(window.location.search);
+    var vendor = params.get("vendor");
+    if (vendor) {
+      var field = document.getElementById("pmfVendorCode");
+      field.value = vendor.trim();
+      field.readOnly = true;
+      field.style.background = "#f3f4f6";
+      field.style.color = "#6b7280";
+    }
+  })();
+
+  // Start with one empty consignment row
+  pmfAddConRow();
+</script>
+</div>
+
+</body>
+</html>
