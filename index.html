@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="snowflake-source" content="cortex-agent-authored" />
-  <title>Warehouse Pick-Up Booking</title>
+  <title>SCMS PMF Vendor Collection Request</title>
   <style data-snowflake-runtime-styles="1">
     table {
       border-collapse: collapse;
@@ -267,8 +267,8 @@
 <div class="pmf-card">
   <div class="pmf-logo-bar">
     <div>
-      <h1 style="font-size:1.4rem;font-weight:700;color:#1a1a2e;">Warehouse Pick-Up Booking</h1>
-      <span style="font-size:0.9rem;color:#6b7280;font-weight:400;">Complete all fields and click Submit to request your pick-up</span>
+      <h1 style="font-size:1.4rem;font-weight:700;color:#1a1a2e;">SCMS PMF Vendor Collection Request</h1>
+      <span style="font-size:0.9rem;color:#6b7280;font-weight:400;">Booking Request Form for Vendors with a SRG Primary Freight Agreement</span>
     </div>
   </div>
 
@@ -288,7 +288,7 @@
     <div style="font-size:0.8rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#6b7280;margin:1.8rem 0 1rem;">Pick-Up Details</div>
 
     <div style="margin-bottom:1.2rem;">
-      <label style="display:block;font-size:0.875rem;font-weight:600;color:#374151;margin-bottom:0.4rem;" for="pmfState">State *</label>
+      <label style="display:block;font-size:0.875rem;font-weight:600;color:#374151;margin-bottom:0.4rem;" for="pmfState">Select State where Vendor consignment collection is required *</label>
       <select id="pmfState" onchange="pmfOnStateChange()"
         style="width:100%;padding:0.6rem 0.9rem;border:1.5px solid #d1d5db;border-radius:8px;font-size:0.9rem;color:#111827;background:#fff;">
         <option value="">— Select State —</option>
@@ -299,7 +299,7 @@
     </div>
 
     <div id="pmfPickupTypeSection" style="margin-bottom:1.2rem;display:none;">
-      <label style="display:block;font-size:0.875rem;font-weight:600;color:#374151;margin-bottom:0.4rem;">Pick-Up Type *</label>
+      <label style="display:block;font-size:0.875rem;font-weight:600;color:#374151;margin-bottom:0.6rem;">Select Consignment/s Journey type *</label>
       <div style="display:flex;gap:1.5rem;margin-top:0.2rem;">
         <label style="display:flex;align-items:center;gap:0.4rem;font-size:0.9rem;font-weight:500;color:#374151;cursor:pointer;">
           <input type="radio" name="pmfPickupType" value="Direct" style="accent-color:#2563eb;cursor:pointer;" onchange="pmfOnPickupTypeChange()" />
@@ -310,12 +310,21 @@
           Via DC
         </label>
       </div>
-      <div id="pmfErr-pickupType" style="font-size:0.78rem;color:#ef4444;margin-top:0.3rem;display:none;">Please select a pick-up type.</div>
+      <div style="margin-top:0.8rem;padding:0.75rem 0.9rem;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;font-size:0.78rem;color:#475569;line-height:1.6;">
+        <p style="margin:0 0 0.5rem;"><strong style="color:#1e293b;">Direct</strong> = Into DC for processing. Generally 1&ndash;2 Consignments for 1 of the Collecting DC to receive into Site and process CPOs.</p>
+        <p style="margin:0;"><strong style="color:#1e293b;">Via DC</strong> = Into Collecting DC for on-forward to End Site to be processed. Generally 2+ Consignments for Multiple Sites (e.g. NSW, QLD, WA, VIC) that the Collecting DC internally co-ordinates for linehaul of CPOs to be processed.</p>
+      </div>
+      <div id="pmfErr-pickupType" style="font-size:0.78rem;color:#ef4444;margin-top:0.3rem;display:none;">Please select a journey type.</div>
     </div>
 
     <!-- CONSIGNMENT DETAILS (hidden until pickup type is selected) -->
     <div id="pmfLowerSection" style="display:none;">
-    <div style="font-size:0.8rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#6b7280;margin:1.8rem 0 1rem;">Consignment Details</div>
+    <div style="font-size:0.8rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#6b7280;margin:1.8rem 0 0.6rem;">Consignment Details</div>
+    <div style="margin-bottom:1rem;padding:0.75rem 0.9rem;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;font-size:0.78rem;color:#78350f;line-height:1.65;">
+      <p style="margin:0 0 0.5rem;">Please list all the consignment numbers related to the pick up. Please also indicate if any consignments are consolidated (mixed) requiring sortation in DC for forwarding.</p>
+      <p style="margin:0 0 0.5rem;"><em>e.g. Pallet 1 contains consignment for VIC DC, Pallet 2 contains consignments NSW, QLD, WA &mdash; to reduce transport costs rather than sending 1 full pallet and 3 half pallets of individual consignments.</em></p>
+      <p style="margin:0;"><strong>&#9888; Reminder:</strong> This information must be clearly specified in SCMS and pallets labelled <strong>&ldquo;MIXED&rdquo;</strong> for the SRG DC team.</p>
+    </div>
 
     <table id="pmfConTable" style="width:100%;border-collapse:collapse;margin-bottom:0.8rem;">
       <thead>
@@ -374,6 +383,10 @@
       <label style="display:block;font-size:0.875rem;font-weight:600;color:#374151;margin-bottom:0.4rem;" for="pmfPickupDate">Pick-Up Date *</label>
       <input type="date" id="pmfPickupDate"
         style="width:100%;padding:0.6rem 0.9rem;border:1.5px solid #d1d5db;border-radius:8px;font-size:0.9rem;color:#111827;background:#fff;" />
+      <div style="margin-top:0.6rem;padding:0.65rem 0.9rem;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;font-size:0.78rem;color:#1e40af;line-height:1.6;">
+        <p style="margin:0 0 0.25rem;">&#8987; Next day collection request cut-off = <strong>3:00 PM</strong></p>
+        <p style="margin:0;">&#128683; <strong>Weekend collections not accepted.</strong></p>
+      </div>
       <div id="pmfErr-pickupDate" style="font-size:0.78rem;color:#ef4444;margin-top:0.3rem;display:none;">Please select a future date.</div>
     </div>
 
