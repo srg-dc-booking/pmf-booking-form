@@ -259,6 +259,98 @@
       .pmf-card { padding: 1.5rem; }
       .pmf-radio-group { flex-direction: column; gap: 0.5rem; }
     }
+    /* ── Confirmation modal ── */
+    .pmf-modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(15,23,42,0.55);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+    .pmf-modal-overlay.pmf-modal-open { display: flex; }
+    .pmf-modal-box {
+      background: #fff;
+      border-radius: 14px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+      width: 100%;
+      max-width: 580px;
+      max-height: 90vh;
+      overflow-y: auto;
+      animation: pmfModalIn 0.18s ease;
+    }
+    @keyframes pmfModalIn { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+    .pmf-modal-header {
+      padding: 1.4rem 1.8rem 1.1rem;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    .pmf-modal-header h2 { font-size: 1.1rem; font-weight: 700; color: #0f172a; margin-bottom: 0.25rem; }
+    .pmf-modal-header p  { font-size: 0.82rem; color: #6b7280; margin: 0; }
+    .pmf-modal-body { padding: 1.2rem 1.8rem; }
+    .pmf-modal-section { margin-bottom: 1.1rem; }
+    .pmf-modal-section-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: #9ca3af;
+      margin-bottom: 0.5rem;
+    }
+    .pmf-modal-row {
+      display: flex;
+      gap: 0.5rem;
+      font-size: 0.875rem;
+      padding: 0.3rem 0;
+      border-bottom: 1px solid #f1f5f9;
+    }
+    .pmf-modal-row:last-child { border-bottom: none; }
+    .pmf-modal-key   { flex: 0 0 160px; color: #6b7280; font-weight: 500; }
+    .pmf-modal-value { flex: 1; color: #0f172a; font-weight: 600; word-break: break-word; }
+    .pmf-modal-con-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    .pmf-modal-con-table th { font-size: 0.72rem; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.25rem 0.5rem 0.4rem; border: none; background: transparent; text-align: left; }
+    .pmf-modal-con-table td { padding: 0.35rem 0.5rem; border: none; border-bottom: 1px solid #f1f5f9; color: #0f172a; }
+    .pmf-modal-con-table tr:last-child td { border-bottom: none; }
+    .pmf-modal-badge-y { background:#dcfce7; color:#15803d; border-radius:4px; padding:1px 6px; font-size:0.78rem; font-weight:700; }
+    .pmf-modal-badge-n { background:#f1f5f9; color:#475569; border-radius:4px; padding:1px 6px; font-size:0.78rem; font-weight:700; }
+    .pmf-modal-footer {
+      padding: 1.1rem 1.8rem;
+      border-top: 1px solid #e5e7eb;
+      display: flex;
+      gap: 0.75rem;
+    }
+    .pmf-modal-btn-back {
+      flex: 1;
+      padding: 0.7rem;
+      background: #f3f4f6;
+      color: #374151;
+      border: 1.5px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .pmf-modal-btn-back:hover { background: #e5e7eb; }
+    .pmf-modal-btn-confirm {
+      flex: 2;
+      padding: 0.7rem;
+      background: #2563eb;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      transition: background 0.15s;
+    }
+    .pmf-modal-btn-confirm:hover:not(:disabled) { background: #1d4ed8; }
+    .pmf-modal-btn-confirm:disabled { background: #93c5fd; cursor: not-allowed; }
   </style>
 </head>
 <body>
@@ -381,13 +473,13 @@
 
     <div style="margin-bottom:1.2rem;">
       <label style="display:block;font-size:0.875rem;font-weight:600;color:#374151;margin-bottom:0.4rem;" for="pmfPickupDate">Pick-Up Date *</label>
-      <input type="date" id="pmfPickupDate"
+      <input type="date" id="pmfPickupDate" onchange="pmfCheckPickupDate(this)"
         style="width:100%;padding:0.6rem 0.9rem;border:1.5px solid #d1d5db;border-radius:8px;font-size:0.9rem;color:#111827;background:#fff;" />
       <div style="margin-top:0.6rem;padding:0.65rem 0.9rem;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;font-size:0.78rem;color:#1e40af;line-height:1.6;">
         <p style="margin:0 0 0.25rem;">&#8987; Next day collection request cut-off = <strong>3:00 PM</strong></p>
         <p style="margin:0;">&#128683; <strong>Weekend collections not accepted.</strong></p>
       </div>
-      <div id="pmfErr-pickupDate" style="font-size:0.78rem;color:#ef4444;margin-top:0.3rem;display:none;">Please select a future date.</div>
+      <div id="pmfErr-pickupDate" style="font-size:0.78rem;color:#ef4444;margin-top:0.3rem;display:none;">Please select a future weekday (Monday–Friday).</div>
     </div>
 
     <!-- NOTES & INSTRUCTIONS -->
@@ -420,6 +512,26 @@
   <div id="pmfAlertError" style="display:none;border-radius:10px;padding:1rem 1.2rem;margin-top:1.2rem;font-size:0.9rem;background:#fef2f2;border:1.5px solid #fca5a5;color:#b91c1c;">
     <h3 style="font-size:0.95rem;margin-bottom:0.4rem;">&#9888;&#65039; Submission Not Completed</h3>
     <div id="pmfErrorMsg"></div>
+  </div>
+</div>
+
+<!-- CONFIRMATION MODAL (outside pmf-card, inside report-atomic-block) -->
+<div id="pmfModalOverlay" class="pmf-modal-overlay">
+  <div class="pmf-modal-box">
+    <div class="pmf-modal-header">
+      <h2>&#128203; Review Your Request</h2>
+      <p>Please confirm the details below are correct before submitting.</p>
+    </div>
+    <div class="pmf-modal-body" id="pmfModalBody">
+      <!-- Populated by pmfShowModal() -->
+    </div>
+    <div class="pmf-modal-footer">
+      <button class="pmf-modal-btn-back" onclick="pmfCloseModal()">&#8592; Edit Details</button>
+      <button class="pmf-modal-btn-confirm" id="pmfModalConfirmBtn" onclick="pmfDoSubmit()">
+        <div id="pmfModalSpinner" style="width:16px;height:16px;border:2px solid rgba(255,255,255,0.4);border-top-color:#fff;border-radius:50%;animation:pmfSpin 0.7s linear infinite;display:none;"></div>
+        <span id="pmfModalConfirmLabel">&#9989; Confirm &amp; Submit</span>
+      </button>
+    </div>
   </div>
 </div>
 
@@ -514,13 +626,52 @@
     }
   }
 
-  // Set min date to tomorrow (future dates only)
-  (function pmfSetDateMin() {
-    var today = new Date();
-    today.setDate(today.getDate() + 1);
+  // Returns the minimum allowed pickup date:
+  // - If before 3PM: tomorrow (next weekday)
+  // - If at/after 3PM: day after tomorrow (next weekday), because next-day cut-off has passed
+  function pmfGetMinDate() {
+    var now = new Date();
+    var cutoffPassed = now.getHours() >= 15;
+    var min = new Date(now);
+    min.setHours(0, 0, 0, 0);
+    min.setDate(min.getDate() + (cutoffPassed ? 2 : 1));
+    while (min.getDay() === 0 || min.getDay() === 6) {
+      min.setDate(min.getDate() + 1);
+    }
+    return min;
+  }
+
+  function pmfDateToStr(d) {
     var pad = function(n) { return String(n).padStart(2, "0"); };
-    document.getElementById("pmfPickupDate").min =
-      today.getFullYear() + "-" + pad(today.getMonth() + 1) + "-" + pad(today.getDate());
+    return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
+  }
+
+  // Live validation on date pick: blocks weekends and dates before the cut-off minimum
+  function pmfCheckPickupDate(input) {
+    if (!input.value) return;
+    var d = new Date(input.value + "T00:00:00");
+    var day = d.getDay();
+    var min = pmfGetMinDate();
+    var err = document.getElementById("pmfErr-pickupDate");
+    if (day === 0 || day === 6) {
+      input.value = "";
+      input.style.borderColor = "#ef4444";
+      err.textContent = "Weekend dates are not accepted. Please select a Monday\u2013Friday.";
+      err.style.display = "block";
+    } else if (d < min) {
+      input.value = "";
+      input.style.borderColor = "#ef4444";
+      err.textContent = "Next-day collection cut-off is 3:00\u202FPM. The earliest available date is " + pmfDateToStr(min) + ".";
+      err.style.display = "block";
+    } else {
+      input.style.borderColor = "#d1d5db";
+      err.style.display = "none";
+    }
+  }
+
+  // Set min attribute on the date picker (respects cut-off and weekends)
+  (function pmfSetDateMin() {
+    document.getElementById("pmfPickupDate").min = pmfDateToStr(pmfGetMinDate());
   })();
 
   function pmfShowFieldError(fieldId, show) {
@@ -582,11 +733,19 @@
     var pickupDate = document.getElementById("pmfPickupDate").value;
     var pdErr = document.getElementById("pmfErr-pickupDate");
     var pdInput = document.getElementById("pmfPickupDate");
-    var today = new Date(); today.setHours(0,0,0,0);
+    var minDate = pmfGetMinDate();
     var selectedDate = pickupDate ? new Date(pickupDate + "T00:00:00") : null;
-    var dateOk = pickupDate && selectedDate > today;
+    var dayOfWeek = selectedDate ? selectedDate.getDay() : -1;
+    var dateOk = pickupDate && selectedDate >= minDate && dayOfWeek !== 0 && dayOfWeek !== 6;
     if (!dateOk) {
       pdInput.style.borderColor = "#ef4444";
+      if (selectedDate && (dayOfWeek === 0 || dayOfWeek === 6)) {
+        pdErr.textContent = "Weekend dates are not accepted. Please select a Monday\u2013Friday.";
+      } else if (selectedDate && selectedDate < minDate) {
+        pdErr.textContent = "Next-day collection cut-off is 3:00\u202FPM. The earliest available date is " + pmfDateToStr(minDate) + ".";
+      } else {
+        pdErr.textContent = "Please select a future weekday (Monday\u2013Friday).";
+      }
       pdErr.style.display = "block";
       valid = false;
     } else {
@@ -601,41 +760,108 @@
     e.preventDefault();
     pmfHideAlerts();
     if (!pmfValidateForm()) return;
+    pmfShowModal();
+  });
 
+  // ── HTML escape helper ────────────────────────────────────────────────────
+  function pmfEsc(str) {
+    return String(str)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+  }
+
+  // ── Confirmation modal ────────────────────────────────────────────────────
+  function pmfShowModal() {
+    var rows = pmfGetConRows();
+    var pickupTypeEl = document.querySelector('input[name="pmfPickupType"]:checked');
+    var notes = document.getElementById("pmfNotes").value.trim();
+
+    var html = "";
+
+    // Vendor
+    html += '<div class="pmf-modal-section">';
+    html += '<div class="pmf-modal-section-label">Vendor Details</div>';
+    html += '<div class="pmf-modal-row"><span class="pmf-modal-key">Vendor Number</span><span class="pmf-modal-value">' + pmfEsc(document.getElementById("pmfVendorCode").value.trim()) + "</span></div>";
+    html += "</div>";
+
+    // Pick-up details
+    html += '<div class="pmf-modal-section">';
+    html += '<div class="pmf-modal-section-label">Pick-Up Details</div>';
+    html += '<div class="pmf-modal-row"><span class="pmf-modal-key">State</span><span class="pmf-modal-value">' + pmfEsc(document.getElementById("pmfState").value) + "</span></div>";
+    html += '<div class="pmf-modal-row"><span class="pmf-modal-key">Journey Type</span><span class="pmf-modal-value">' + pmfEsc(pickupTypeEl ? pickupTypeEl.value : "") + "</span></div>";
+    html += "</div>";
+
+    // Consignments
+    html += '<div class="pmf-modal-section">';
+    html += '<div class="pmf-modal-section-label">Consignments (' + rows.length + ")</div>";
+    html += '<table class="pmf-modal-con-table"><thead><tr><th>#</th><th>Consignment Number</th><th>Mixed</th></tr></thead><tbody>';
+    rows.forEach(function(r, i) {
+      var badge = r.mixed === "Y"
+        ? '<span class="pmf-modal-badge-y">Y</span>'
+        : '<span class="pmf-modal-badge-n">N</span>';
+      html += "<tr><td style=\"color:#9ca3af;\">" + (i + 1) + "</td><td>" + pmfEsc(r.consignment) + "</td><td>" + badge + "</td></tr>";
+    });
+    html += "</tbody></table></div>";
+
+    // Date
+    html += '<div class="pmf-modal-section">';
+    html += '<div class="pmf-modal-section-label">Requested Pick-Up Date</div>';
+    html += '<div class="pmf-modal-row"><span class="pmf-modal-key">Date</span><span class="pmf-modal-value">' + pmfEsc(document.getElementById("pmfPickupDate").value) + "</span></div>";
+    html += "</div>";
+
+    // Notes (only if provided)
+    if (notes) {
+      html += '<div class="pmf-modal-section">';
+      html += '<div class="pmf-modal-section-label">Notes &amp; Instructions</div>';
+      html += '<div style="font-size:0.875rem;color:#374151;line-height:1.55;padding:0.3rem 0;">' + pmfEsc(notes).replace(/\n/g, "<br>") + "</div>";
+      html += "</div>";
+    }
+
+    document.getElementById("pmfModalBody").innerHTML = html;
+    document.getElementById("pmfModalOverlay").classList.add("pmf-modal-open");
+  }
+
+  function pmfCloseModal() {
+    document.getElementById("pmfModalOverlay").classList.remove("pmf-modal-open");
+  }
+
+  function pmfSetModalLoading(on) {
+    var btn     = document.getElementById("pmfModalConfirmBtn");
+    var label   = document.getElementById("pmfModalConfirmLabel");
+    var spinner = document.getElementById("pmfModalSpinner");
+    btn.disabled = on;
+    label.textContent = on ? "Submitting\u2026" : "\u2705 Confirm & Submit";
+    spinner.style.display = on ? "block" : "none";
+  }
+
+  function pmfDoSubmit() {
     var rows = pmfGetConRows();
     var pickupTypeEl = document.querySelector('input[name="pmfPickupType"]:checked');
 
     var payload = {
-      vendor_code:   document.getElementById("pmfVendorCode").value.trim(),
-      state:         document.getElementById("pmfState").value,
-      pickup_type:   pickupTypeEl ? pickupTypeEl.value : "",
-      consignments:  JSON.stringify(rows),
-      pickup_date:   document.getElementById("pmfPickupDate").value,
-      notes:         document.getElementById("pmfNotes").value.trim()
+      vendor_code:  document.getElementById("pmfVendorCode").value.trim(),
+      state:        document.getElementById("pmfState").value,
+      pickup_type:  pickupTypeEl ? pickupTypeEl.value : "",
+      consignments: rows,
+      pickup_date:  document.getElementById("pmfPickupDate").value,
+      notes:        document.getElementById("pmfNotes").value.trim()
     };
 
-    pmfSetLoading(true);
+    pmfSetModalLoading(true);
 
     fetch(PMF_WEBHOOK_URL, {
       method:  "POST",
       headers: { "Content-Type": "application/json" },
       body:    JSON.stringify(payload)
     }).then(function() {
+      pmfCloseModal();
       pmfShowSuccess();
     }).catch(function() {
+      pmfCloseModal();
       pmfShowErrorMsg("Could not reach the booking service. Please check your connection and try again.");
     }).finally(function() {
-      pmfSetLoading(false);
+      pmfSetModalLoading(false);
     });
-  });
-
-  function pmfSetLoading(on) {
-    var btn = document.getElementById("pmfSubmitBtn");
-    var label = document.getElementById("pmfSubmitLabel");
-    var spinner = document.getElementById("pmfSpinner");
-    btn.disabled = on;
-    label.textContent = on ? "Submitting\u2026" : "Request Pick-Up";
-    spinner.style.display = on ? "block" : "none";
   }
 
   function pmfHideAlerts() {
