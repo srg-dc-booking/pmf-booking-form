@@ -398,15 +398,23 @@ document.getElementById("frm").onsubmit = async function(e) {
   btn.disabled = true; btn.textContent = "Submitting…";
 
   const payload = {
-    booking_type:           "Primary Freight",
-    vendor_no:              document.getElementById("vendor_no").value.trim(),
-    vendor_name:            document.getElementById("vendor_name").value.trim(),
-    email:                  document.getElementById("email").value.trim(),
-    collection_state:       document.getElementById("collection_state").value,
-    consignment_rows:       rows,
-    cpo_numbers:            cpoList,
-    collection_date:        d,
-    special_instructions:   document.getElementById("special_instructions").value.trim() || null,
+    form_type:    "Primary Freight",
+    submitted_at: new Date().toISOString(),
+    bookings: [{
+      booking_type:         "Primary Freight",
+      vendor_no:            document.getElementById("vendor_no").value.trim(),
+      vendor_name:          document.getElementById("vendor_name").value.trim(),
+      email:                document.getElementById("email").value.trim(),
+      delivery_type:        null,
+      dc:                   document.getElementById("collection_state").value,
+      booking_date:         d,
+      booking_time:         null,
+      transport_provider:   null,
+      transport_connotes:   null,
+      cpo_numbers:          cpoList,
+      consignment_rows:     rows,
+      special_instructions: document.getElementById("special_instructions").value.trim() || null,
+    }],
   };
 
   try {
