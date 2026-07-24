@@ -3,201 +3,394 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="snowflake-source" content="cortex-agent-authored" />
   <title>Primary Freight – Pick-Up Request</title>
+  <style data-snowflake-runtime-styles="1">
+    table { border-collapse: collapse; margin: 16px 0; width: 100%; }
+    th, td { border: 1px solid #d1d5db; padding: 6px 10px; vertical-align: top; text-align: left; }
+    th { background: #f3f4f6; font-weight: 600; }
+    aside.callout { margin: 16px 0; padding: 12px 16px; border-inline-start: 4px solid #d1d5db; border-radius: 0 6px 6px 0; background: #f9fafb; }
+    aside.callout > p:first-child { margin-top: 0; }
+    aside.callout > p:last-child { margin-bottom: 0; }
+    aside.callout-info { border-inline-start-color: #2563eb; background: #eff6ff; }
+    aside.callout-warning { border-inline-start-color: #d97706; background: #fffbeb; }
+    details { margin: 12px 0; padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 6px; background: #ffffff; }
+    details > summary { font-weight: 600; cursor: pointer; padding: 4px 0; }
+  </style>
   <style>
-    body { font-family: Arial, sans-serif; background: #f4f5f7; margin: 0; padding: 2rem 1rem; }
-    .card { background: #fff; border-radius: 8px; box-shadow: 0 2px 12px rgba(0,0,0,.08); max-width: 680px; margin: 0 auto; padding: 2rem; }
-    h1 { font-size: 1.3rem; margin-bottom: .3rem; color: #1a1a2e; }
-    p.sub { font-size: .85rem; color: #666; margin-bottom: 1.5rem; }
-    hr { border: none; border-top: 1px solid #e5e7eb; margin: 1.4rem 0; }
-    h2 { font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: #6b7280; margin: 0 0 .8rem; }
-    label { display: block; font-size: .85rem; font-weight: 600; color: #374151; margin-bottom: .3rem; }
-    input[type=text], input[type=email], input[type=date], input[type=number], select, textarea {
-      width: 100%; padding: .55rem .8rem; border: 1.5px solid #d1d5db; border-radius: 6px;
-      font-size: .88rem; color: #111; box-sizing: border-box; font-family: inherit;
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f0f2f5; padding: 2rem 1rem; color: #1f2937; }
+    .card { background: #fff; border-radius: 10px; box-shadow: 0 2px 16px rgba(0,0,0,.09); max-width: 980px; margin: 0 auto; padding: 2rem 2.5rem; }
+    .form-title { font-size: 1.4rem; font-weight: 700; color: #111827; margin-bottom: .25rem; }
+    .form-subtitle { font-size: .88rem; color: #6b7280; margin-bottom: 1.8rem; }
+    .section-label { font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #9ca3af; margin: 1.6rem 0 .8rem; border-top: 1px solid #f3f4f6; padding-top: 1.2rem; }
+    .section-label:first-of-type { border-top: none; padding-top: 0; margin-top: 0; }
+    .field { margin-bottom: 1.1rem; }
+    .field label { display: block; font-size: .84rem; font-weight: 600; color: #374151; margin-bottom: .35rem; }
+    .field input[type=text], .field input[type=email], .field input[type=date], .field input[type=number], .field select, .field textarea {
+      width: 100%; padding: .55rem .8rem; border: 1.5px solid #d1d5db; border-radius: 7px;
+      font-size: .88rem; color: #111; font-family: inherit; transition: border-color .15s;
     }
-    textarea { resize: vertical; }
-    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
-    .field { margin-bottom: 1rem; }
-    .err { color: #dc2626; font-size: .78rem; margin-top: .2rem; display: none; }
-    .radio-row { display: flex; gap: 1.5rem; margin-top: .3rem; }
-    .radio-row label { font-weight: 400; display: flex; align-items: center; gap: .4rem; cursor: pointer; }
-    .info-box { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 6px; padding: .65rem .9rem; font-size: .82rem; color: #1e40af; margin-bottom: .8rem; }
-    table { width: 100%; border-collapse: collapse; margin-bottom: .5rem; }
-    th { font-size: .72rem; font-weight: 700; text-transform: uppercase; color: #6b7280; text-align: left; padding: 0 .4rem .5rem; }
-    td { padding: .25rem .3rem; }
-    td input, td select { padding: .4rem .5rem; font-size: .83rem; }
-    .del-btn { background: none; border: none; color: #ef4444; font-size: 1.2rem; cursor: pointer; padding: 0 .3rem; }
-    .add-btn { background: #f3f4f6; border: 1.5px dashed #9ca3af; border-radius: 6px; width: 100%; padding: .45rem; font-size: .85rem; cursor: pointer; margin-top: .3rem; }
-    .add-btn:hover { background: #e5e7eb; }
-    .submit-btn { width: 100%; padding: .8rem; background: #2563eb; color: #fff; border: none; border-radius: 6px; font-size: 1rem; font-weight: 700; cursor: pointer; margin-top: 1.5rem; }
+    .field input:focus, .field select:focus, .field textarea:focus { outline: none; border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,.1); }
+    .field textarea { resize: vertical; }
+    .field .hint { font-size: .76rem; color: #6b7280; margin-top: .3rem; }
+    .field .err { font-size: .76rem; color: #dc2626; margin-top: .3rem; display: none; }
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; }
+    .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.2rem; }
+    .info-banner { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 7px; padding: .65rem 1rem; font-size: .82rem; color: #1e40af; margin-bottom: .9rem; }
+    .warn-banner { background: #fffbeb; border: 1px solid #fcd34d; border-radius: 7px; padding: .65rem 1rem; font-size: .82rem; color: #92400e; margin-bottom: .9rem; }
+
+    /* ---- Consignment Table ---- */
+    .table-wrap { overflow-x: auto; margin-bottom: .6rem; }
+    .con-table { width: 100%; border-collapse: collapse; min-width: 860px; }
+    .con-table th { font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: #6b7280; background: #f9fafb; padding: .45rem .5rem; border: 1px solid #e5e7eb; white-space: nowrap; }
+    .con-table td { padding: .3rem .35rem; border: 1px solid #e5e7eb; vertical-align: top; }
+    .con-table td input, .con-table td select { width: 100%; padding: .38rem .45rem; border: 1px solid #d1d5db; border-radius: 5px; font-size: .82rem; font-family: inherit; }
+    .con-table td input:focus, .con-table td select:focus { outline: none; border-color: #2563eb; }
+    .col-dc   { min-width: 110px; }
+    .col-mhu  { min-width: 90px; }
+    .col-qty  { min-width: 60px; }
+    .col-dg   { min-width: 60px; }
+    .col-un   { min-width: 80px; }
+    .col-cls  { min-width: 70px; }
+    .col-wt   { min-width: 70px; }
+    .col-ht   { min-width: 70px; }
+    .col-mx   { min-width: 60px; }
+    .col-del  { min-width: 36px; text-align: center; }
+    .del-btn { background: none; border: none; color: #ef4444; font-size: 1.15rem; cursor: pointer; padding: 0 .25rem; line-height: 1; }
+    .del-btn:hover { color: #b91c1c; }
+
+    /* ---- Buttons ---- */
+    .btn-row { display: flex; gap: .6rem; flex-wrap: wrap; margin-top: .5rem; }
+    .btn-add { background: #f3f4f6; border: 1.5px dashed #9ca3af; border-radius: 7px; padding: .45rem 1rem; font-size: .84rem; cursor: pointer; color: #374151; font-family: inherit; }
+    .btn-add:hover { background: #e5e7eb; border-color: #6b7280; }
+    .btn-paste { background: #fff; border: 1.5px solid #d1d5db; border-radius: 7px; padding: .45rem 1rem; font-size: .84rem; cursor: pointer; color: #374151; font-family: inherit; }
+    .btn-paste:hover { background: #f9fafb; }
+
+    /* ---- Paste Panel ---- */
+    .paste-panel { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1rem 1.1rem; margin-top: .6rem; display: none; }
+    .paste-panel label { font-size: .8rem; font-weight: 600; color: #374151; margin-bottom: .4rem; display: block; }
+    .paste-panel textarea { width: 100%; height: 90px; font-family: monospace; font-size: .8rem; border: 1px solid #cbd5e1; border-radius: 5px; padding: .5rem; resize: vertical; }
+    .paste-panel .paste-btns { display: flex; gap: .5rem; margin-top: .5rem; }
+    .btn-import { background: #2563eb; color: #fff; border: none; border-radius: 6px; padding: .4rem .9rem; font-size: .82rem; cursor: pointer; font-family: inherit; }
+    .btn-import:hover { background: #1d4ed8; }
+    .btn-cancel { background: #f1f5f9; color: #374151; border: 1px solid #d1d5db; border-radius: 6px; padding: .4rem .9rem; font-size: .82rem; cursor: pointer; font-family: inherit; }
+
+    /* ---- CPO section ---- */
+    .cpo-tags { display: flex; flex-wrap: wrap; gap: .4rem; margin-bottom: .5rem; min-height: 1rem; }
+    .cpo-tag { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 20px; padding: .2rem .65rem; font-size: .8rem; color: #1e40af; display: flex; align-items: center; gap: .3rem; }
+    .cpo-tag button { background: none; border: none; color: #93c5fd; cursor: pointer; font-size: .9rem; padding: 0; line-height: 1; }
+    .cpo-tag button:hover { color: #1d4ed8; }
+
+    /* ---- Submit ---- */
+    .submit-btn { width: 100%; padding: .85rem; background: #2563eb; color: #fff; border: none; border-radius: 8px; font-size: 1rem; font-weight: 700; cursor: pointer; margin-top: 1.8rem; font-family: inherit; transition: background .15s; }
+    .submit-btn:hover:not(:disabled) { background: #1d4ed8; }
     .submit-btn:disabled { background: #93c5fd; cursor: not-allowed; }
-    .success { background: #f0fdf4; border: 1.5px solid #86efac; border-radius: 8px; padding: 1rem 1.2rem; color: #15803d; margin-top: 1.2rem; display: none; }
-    .success h3 { margin: 0 0 .4rem; }
+
+    .success-box { background: #f0fdf4; border: 1.5px solid #86efac; border-radius: 9px; padding: 1.2rem 1.4rem; color: #15803d; margin-top: 1.4rem; display: none; }
+    .success-box h3 { margin: 0 0 .5rem; font-size: 1rem; }
+
+    @media (max-width: 600px) {
+      .card { padding: 1.4rem 1rem; }
+      .two-col, .three-col { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>
+
+<div class="report-atomic-block" data-block-type="html" data-block-id="pmf-form-001">
 <div class="card">
-  <h1>Primary Freight — Pick-Up Request</h1>
-  <p class="sub">Complete all fields and submit to request your vendor collection. You will receive a confirmation email.</p>
 
-  <form id="frm">
+  <p class="form-title">Primary Freight — Pick-Up Request</p>
+  <p class="form-subtitle">Complete all sections and submit. You will receive a confirmation email with your booking reference.</p>
 
-    <h2>Vendor Details</h2>
-    <div class="row">
+  <form id="frm" novalidate>
+
+    <!-- VENDOR DETAILS -->
+    <p class="section-label">Vendor Details</p>
+    <div class="two-col">
       <div class="field">
-        <label>Vendor Number *</label>
-        <input type="text" id="vendor" placeholder="e.g. 101503" />
-        <div class="err" id="e-vendor">Required</div>
+        <label>Vendor Number <span style="color:#ef4444">*</span></label>
+        <input type="text" id="vendor_no" placeholder="e.g. 101503" autocomplete="off" />
+        <div class="err" id="e-vendor_no">Vendor number is required.</div>
       </div>
       <div class="field">
-        <label>Confirmation Email *</label>
-        <input type="email" id="email" placeholder="supplier@company.com" />
-        <div class="err" id="e-email">Valid email required</div>
+        <label>Vendor Name <span style="color:#ef4444">*</span></label>
+        <input type="text" id="vendor_name" placeholder="e.g. Acme Supplies Pty Ltd" />
+        <div class="err" id="e-vendor_name">Vendor name is required.</div>
       </div>
     </div>
-
-    <hr>
-    <h2>Pick-Up Details</h2>
     <div class="field">
-      <label>State where collection is required *</label>
-      <select id="state">
+      <label>Confirmation Email <span style="color:#ef4444">*</span></label>
+      <input type="email" id="email" placeholder="supplier@yourcompany.com" />
+      <div class="err" id="e-email">A valid email address is required.</div>
+    </div>
+
+    <!-- COLLECTION STATE -->
+    <p class="section-label">Collection Details</p>
+    <div class="field">
+      <label>Select which state collection is required <span style="color:#ef4444">*</span></label>
+      <select id="collection_state">
         <option value="">— Select State —</option>
-        <option>VIC</option>
-        <option>NSW</option>
+        <option value="NSW">NSW</option>
+        <option value="VIC">VIC</option>
+        <option value="QLD">QLD</option>
+        <option value="WA">WA</option>
+        <option value="SA">SA</option>
+        <option value="TAS">TAS</option>
+        <option value="ACT">ACT</option>
+        <option value="NT">NT</option>
       </select>
-      <div class="err" id="e-state">Required</div>
+      <div class="err" id="e-collection_state">Please select a state.</div>
     </div>
 
+    <!-- CONSIGNMENT TABLE -->
+    <p class="section-label">Consignment Details</p>
+    <div class="info-banner">
+      Enter each consignment line below. Use <strong>+ Add Row</strong> to add lines one at a time, or <strong>📋 Paste from Spreadsheet</strong> to bulk-import rows.
+      For <strong>Dangerous Goods</strong> items, complete the UN Number and DG Class columns.
+    </div>
+
+    <div class="table-wrap">
+      <table class="con-table">
+        <thead>
+          <tr>
+            <th class="col-dc">End DC Receiving</th>
+            <th class="col-mhu">MHU Type</th>
+            <th class="col-qty">Qty</th>
+            <th class="col-dg">DG (Y/N)</th>
+            <th class="col-un">UN Number</th>
+            <th class="col-cls">DG Class</th>
+            <th class="col-wt">Weight (kg)</th>
+            <th class="col-ht">Height (cm)</th>
+            <th class="col-mx">Mixed (Y/N)</th>
+            <th class="col-del"></th>
+          </tr>
+        </thead>
+        <tbody id="con-tbody"></tbody>
+      </table>
+    </div>
+    <div class="err" id="e-con">Please add at least one consignment row.</div>
+
+    <div class="btn-row">
+      <button type="button" class="btn-add" onclick="addConRow()">+ Add Row</button>
+      <button type="button" class="btn-paste" onclick="togglePaste('con-paste')">📋 Paste from Spreadsheet</button>
+    </div>
+
+    <div class="paste-panel" id="con-paste">
+      <label>Paste columns from Excel (tab or comma separated):<br>
+        <span style="font-weight:400;color:#6b7280">End DC Receiving · MHU Type · Qty · DG (Y/N) · UN Number · DG Class · Weight (kg) · Height (cm) · Mixed (Y/N)</span>
+      </label>
+      <textarea id="con-paste-txt" placeholder="DC01&#9;Pallet&#9;4&#9;N&#9;&#9;&#9;500&#9;120&#9;N&#10;DC02&#9;Stillage&#9;2&#9;Y&#9;UN1234&#9;3&#9;300&#9;90&#9;Y"></textarea>
+      <div class="paste-btns">
+        <button type="button" class="btn-import" onclick="importConPaste()">Import Rows</button>
+        <button type="button" class="btn-cancel" onclick="togglePaste('con-paste')">Cancel</button>
+      </div>
+    </div>
+
+    <!-- CPO NUMBERS -->
+    <p class="section-label">CPO Numbers</p>
     <div class="field">
-      <div class="info-box">
-        <strong>Direct</strong> = Into DC for processing. Generally 1–2 consignments for one collecting DC.<br>
-        <strong>Via DC</strong> = Into collecting DC for on-forwarding to end site. Generally 2+ consignments for multiple sites.
+      <label>Enter or paste CPO numbers</label>
+      <div class="cpo-tags" id="cpo-tags"></div>
+      <div style="display:flex;gap:.5rem;">
+        <input type="text" id="cpo-input" placeholder="Type a CPO number and press Enter, or paste multiple" style="flex:1;padding:.5rem .8rem;border:1.5px solid #d1d5db;border-radius:7px;font-size:.88rem;font-family:inherit;" />
+        <button type="button" class="btn-add" style="white-space:nowrap;" onclick="addCPOFromInput()">+ Add</button>
       </div>
-      <label>Consignment Journey Type *</label>
-      <div class="radio-row">
-        <label><input type="radio" name="dt" value="Direct"> Direct</label>
-        <label><input type="radio" name="dt" value="Via DC"> Via DC</label>
-      </div>
-      <div class="err" id="e-dt">Please select a journey type</div>
+      <p class="hint">Press <strong>Enter</strong> after each CPO, or paste a list (comma or newline separated) and click Add.</p>
     </div>
 
-    <hr>
-    <h2>Consignment Details</h2>
-    <p style="font-size:.82rem;color:#6b7280;margin-bottom:.8rem">
-      Mark <strong>Mixed = Y</strong> if a pallet contains goods for multiple destinations — must be labelled <strong>'MIXED'</strong> for the DC team.
-    </p>
-    <table>
-      <thead>
-        <tr>
-          <th>Consignment Number</th>
-          <th style="width:120px">Mixed (Y/N)</th>
-          <th style="width:40px"></th>
-        </tr>
-      </thead>
-      <tbody id="tbody"></tbody>
-    </table>
-    <button type="button" class="add-btn" onclick="addRow()">+ Add Consignment</button>
-    <div class="err" id="e-con">Add at least one consignment</div>
-
-    <hr>
-    <h2>Transport Requirements</h2>
-    <div class="row">
-      <div class="field">
-        <label>Qty of Trucks Required *</label>
-        <input type="number" id="trucks" min="1" value="1" />
-        <div class="err" id="e-trucks">Required</div>
-      </div>
-      <div class="field">
-        <label>No of Transport Floor Spaces Required *</label>
-        <input type="number" id="floor" min="1" value="1" />
-        <div class="err" id="e-floor">Required</div>
-      </div>
+    <!-- COLLECTION DATE -->
+    <p class="section-label">Requested Collection Date</p>
+    <div class="warn-banner">
+      ⏰ <strong>Next day collection request cut-off is 2:00 PM.</strong> Weekend collections are not accepted — please select a weekday.
     </div>
-
-    <hr>
-    <h2>Requested Pick-Up Date</h2>
-    <p style="font-size:.82rem;color:#6b7280;margin-bottom:.8rem">⏳ Next-day cut-off: <strong>3:00 PM</strong> &nbsp;|&nbsp; 🚫 Weekends not accepted</p>
     <div class="field">
-      <label>Pick-Up Date *</label>
-      <input type="date" id="pdate" />
-      <div class="err" id="e-pdate">Please select a weekday</div>
+      <label>Collection Date <span style="color:#ef4444">*</span></label>
+      <input type="date" id="collection_date" />
+      <div class="err" id="e-collection_date">Please select a valid weekday.</div>
     </div>
 
-    <hr>
-    <h2>Notes &amp; Instructions</h2>
+    <!-- SPECIAL INSTRUCTIONS -->
+    <p class="section-label">Special Instructions</p>
     <div class="field">
-      <textarea id="notes" rows="3" placeholder="Special handling requirements, access instructions, or other relevant notes..."></textarea>
+      <label>Special Instructions / Notes</label>
+      <textarea id="special_instructions" rows="5" placeholder="Enter any special handling requirements, site access instructions, hazardous material details, preferred collection time windows, or any other relevant information for the collection team…"></textarea>
+      <p class="hint">Include anything the driver or DC team needs to know before arrival.</p>
     </div>
 
     <button type="submit" class="submit-btn" id="sbtn">Submit Pick-Up Request</button>
   </form>
 
-  <div class="success" id="ok">
-    <h3>✅ Request Submitted</h3>
-    <p>Your primary freight pick-up request has been received. You will receive a confirmation email shortly. If nothing arrives within 15 minutes please contact the warehouse team.</p>
+  <div class="success-box" id="ok">
+    <h3>✅ Request Submitted Successfully</h3>
+    <p>Your primary freight pick-up request has been received. A confirmation email will be sent to you shortly. If you do not receive a confirmation within 15 minutes please contact the warehouse bookings team.</p>
   </div>
-</div>
+
+</div><!-- .card -->
+</div><!-- report-atomic-block -->
 
 <script>
 const WEBHOOK = "PASTE_YOUR_POWER_AUTOMATE_URL_HERE";
 
-let rowId = 0;
-function addRow() {
-  rowId++;
-  const r = rowId;
+/* ─── Consignment Table ─────────────────────────────────────── */
+let conRowId = 0;
+const MHU_TYPES = ["Pallet","Stillage","Carton","Drum","IBCs","Other"];
+
+function addConRow(vals) {
+  conRowId++;
+  const r = conRowId;
+  const v = vals || {};
+  const mhuOpts = MHU_TYPES.map(t => `<option${(v.mhu||"")===t?" selected":""}>${t}</option>`).join("");
+  const yn = (val, def) => val === "Y" ? ' selected' : (val === "N" ? '' : (def==="Y"?' selected':''));
   const tr = document.createElement("tr");
-  tr.id = "r"+r;
+  tr.id = "cr"+r;
   tr.innerHTML = `
-    <td><input type="text" id="cn${r}" placeholder="e.g. CON001234"></td>
-    <td><select id="mx${r}"><option value="N">N</option><option value="Y">Y</option></select></td>
-    <td><button type="button" class="del-btn" onclick="document.getElementById('r${r}').remove()">×</button></td>`;
-  document.getElementById("tbody").appendChild(tr);
-}
-addRow();
-
-function getRows() {
-  return [...document.querySelectorAll("#tbody tr")].map(tr => {
-    const n = tr.id.replace("r","");
-    const c = document.getElementById("cn"+n)?.value.trim();
-    return c ? { consignment: c, mixed: document.getElementById("mx"+n).value } : null;
-  }).filter(Boolean);
+    <td class="col-dc"><input type="text" id="dc${r}" value="${v.dc||""}" placeholder="e.g. LAVERTON"></td>
+    <td class="col-mhu"><select id="mhu${r}"><option value="">—</option>${mhuOpts}</select></td>
+    <td class="col-qty"><input type="number" id="qty${r}" value="${v.qty||1}" min="1" style="width:60px"></td>
+    <td class="col-dg"><select id="dg${r}" onchange="toggleDG(${r})"><option value="N"${yn(v.dg,"N")}>N</option><option value="Y"${yn(v.dg,"Y")}>Y</option></select></td>
+    <td class="col-un"><input type="text" id="un${r}" value="${v.un||""}" placeholder="UN1234" ${(v.dg!=="Y")?"disabled style='background:#f9fafb;color:#9ca3af'":""}></td>
+    <td class="col-cls"><input type="text" id="cls${r}" value="${v.cls||""}" placeholder="e.g. 3" ${(v.dg!=="Y")?"disabled style='background:#f9fafb;color:#9ca3af'":""}></td>
+    <td class="col-wt"><input type="number" id="wt${r}" value="${v.wt||""}" min="0" placeholder="kg"></td>
+    <td class="col-ht"><input type="number" id="ht${r}" value="${v.ht||""}" min="0" placeholder="cm"></td>
+    <td class="col-mx"><select id="mx${r}"><option value="N"${yn(v.mx,"N")}>N</option><option value="Y"${yn(v.mx,"Y")}>Y</option></select></td>
+    <td class="col-del"><button type="button" class="del-btn" onclick="document.getElementById('cr${r}').remove()">×</button></td>`;
+  document.getElementById("con-tbody").appendChild(tr);
 }
 
-const pd = document.getElementById("pdate");
-pd.min = new Date().toISOString().split("T")[0];
+function toggleDG(r) {
+  const isDG = document.getElementById("dg"+r).value === "Y";
+  ["un","cls"].forEach(f => {
+    const el = document.getElementById(f+r);
+    el.disabled = !isDG;
+    el.style.background = isDG ? "" : "#f9fafb";
+    el.style.color = isDG ? "" : "#9ca3af";
+    if (!isDG) el.value = "";
+  });
+}
+
+function getConRows() {
+  return [...document.querySelectorAll("#con-tbody tr")].map(tr => {
+    const r = tr.id.replace("cr","");
+    return {
+      end_dc_receiving:  document.getElementById("dc"+r)?.value.trim() || "",
+      mhu_type:          document.getElementById("mhu"+r)?.value || "",
+      qty:               +document.getElementById("qty"+r)?.value || 1,
+      dangerous_goods:   document.getElementById("dg"+r)?.value || "N",
+      dg_un_number:      document.getElementById("un"+r)?.value.trim() || "",
+      dg_class:          document.getElementById("cls"+r)?.value.trim() || "",
+      weight_kg:         document.getElementById("wt"+r)?.value || "",
+      height_cm:         document.getElementById("ht"+r)?.value || "",
+      mixed:             document.getElementById("mx"+r)?.value || "N",
+    };
+  });
+}
+
+// Add first empty row on load
+addConRow();
+
+/* ─── Paste Panel ───────────────────────────────────────────── */
+function togglePaste(id) {
+  const p = document.getElementById(id);
+  p.style.display = p.style.display === "block" ? "none" : "block";
+}
+
+function importConPaste() {
+  const raw = document.getElementById("con-paste-txt").value.trim();
+  if (!raw) return;
+  const lines = raw.split(/\r?\n/).filter(l => l.trim());
+  let added = 0;
+  lines.forEach(line => {
+    const cols = line.split(/\t|,/).map(c => c.trim());
+    if (cols[0] || cols[1]) {
+      addConRow({ dc: cols[0]||"", mhu: cols[1]||"", qty: cols[2]||1,
+                  dg: (cols[3]||"N").toUpperCase(), un: cols[4]||"", cls: cols[5]||"",
+                  wt: cols[6]||"", ht: cols[7]||"", mx: (cols[8]||"N").toUpperCase() });
+      added++;
+    }
+  });
+  if (added) {
+    document.getElementById("con-paste-txt").value = "";
+    togglePaste("con-paste");
+  }
+}
+
+/* ─── CPO Numbers ───────────────────────────────────────────── */
+let cpoList = [];
+
+function renderCPOTags() {
+  const container = document.getElementById("cpo-tags");
+  container.innerHTML = cpoList.map((c,i) =>
+    `<span class="cpo-tag">${c}<button type="button" onclick="removeCPO(${i})">×</button></span>`
+  ).join("");
+}
+
+function addCPOs(text) {
+  const items = text.split(/[\n,;]+/).map(s => s.trim()).filter(s => s.length > 0);
+  items.forEach(item => { if (!cpoList.includes(item)) cpoList.push(item); });
+  renderCPOTags();
+}
+
+function removeCPO(i) { cpoList.splice(i,1); renderCPOTags(); }
+
+function addCPOFromInput() {
+  const el = document.getElementById("cpo-input");
+  addCPOs(el.value);
+  el.value = "";
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  document.getElementById("cpo-input").addEventListener("keydown", function(e) {
+    if (e.key === "Enter") { e.preventDefault(); addCPOFromInput(); }
+  });
+  document.getElementById("cpo-input").addEventListener("paste", function(e) {
+    e.preventDefault();
+    const text = (e.clipboardData || window.clipboardData).getData("text");
+    this.value = "";
+    addCPOs(text);
+  });
+});
+
+/* ─── Date Validation ───────────────────────────────────────── */
+const dateEl = document.getElementById("collection_date");
+const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate()+1);
+dateEl.min = tomorrow.toISOString().split("T")[0];
 function isWeekend(s) { const d = new Date(s+"T12:00:00"); return d.getDay()===0||d.getDay()===6; }
 
+/* ─── Submission ────────────────────────────────────────────── */
 document.getElementById("frm").onsubmit = async function(e) {
   e.preventDefault();
   let ok = true;
-  const show = (id, bad) => { document.getElementById("e-"+id).style.display = bad?"block":"none"; if(bad) ok=false; };
+  const show = (id, bad) => {
+    const el = document.getElementById("e-"+id);
+    if (el) { el.style.display = bad ? "block" : "none"; }
+    if (bad) ok = false;
+  };
 
-  show("vendor", !document.getElementById("vendor").value.trim());
-  show("email", !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(document.getElementById("email").value.trim()));
-  show("state", !document.getElementById("state").value);
-  show("dt", !document.querySelector('input[name=dt]:checked'));
-  show("con", getRows().length === 0);
-  show("trucks", !+document.getElementById("trucks").value);
-  show("floor", !+document.getElementById("floor").value);
-  const d = document.getElementById("pdate").value;
-  show("pdate", !d || isWeekend(d));
-  if (!ok) return;
+  show("vendor_no",          !document.getElementById("vendor_no").value.trim());
+  show("vendor_name",        !document.getElementById("vendor_name").value.trim());
+  show("email",              !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(document.getElementById("email").value.trim()));
+  show("collection_state",   !document.getElementById("collection_state").value);
+  const rows = getConRows();
+  show("con",                rows.length === 0);
+  const d = document.getElementById("collection_date").value;
+  show("collection_date",    !d || isWeekend(d));
+  if (!ok) { document.querySelector('[style="display:block"].err')?.scrollIntoView({behavior:"smooth",block:"center"}); return; }
 
   const btn = document.getElementById("sbtn");
   btn.disabled = true; btn.textContent = "Submitting…";
 
   const payload = {
-    booking_type:     "Primary Freight",
-    vendor_code:      document.getElementById("vendor").value.trim(),
-    state:            document.getElementById("state").value,
-    delivery_type:    document.querySelector('input[name=dt]:checked').value,
-    consignment_info: JSON.stringify(getRows()),
-    no_trucks:        +document.getElementById("trucks").value,
-    floor_space:      +document.getElementById("floor").value,
-    preferred_date:   d,
-    notes:            document.getElementById("notes").value.trim()||null,
-    email:            document.getElementById("email").value.trim()
+    booking_type:           "Primary Freight",
+    vendor_no:              document.getElementById("vendor_no").value.trim(),
+    vendor_name:            document.getElementById("vendor_name").value.trim(),
+    email:                  document.getElementById("email").value.trim(),
+    collection_state:       document.getElementById("collection_state").value,
+    consignment_rows:       rows,
+    cpo_numbers:            cpoList,
+    collection_date:        d,
+    special_instructions:   document.getElementById("special_instructions").value.trim() || null,
   };
 
   try {
@@ -206,12 +399,17 @@ document.getElementById("frm").onsubmit = async function(e) {
     document.getElementById("ok").style.display  = "block";
   } catch {
     btn.disabled = false; btn.textContent = "Submit Pick-Up Request";
-    alert("Could not reach the booking service. Please try again.");
+    alert("Could not reach the booking service. Please check your connection and try again.");
   }
 };
 
+/* ─── Pre-fill vendor from URL ?vendor=XXXXX ─────────────────── */
 const qv = new URLSearchParams(location.search).get("vendor");
-if (qv) { const f=document.getElementById("vendor"); f.value=qv; f.readOnly=true; f.style.background="#f3f4f6"; f.style.color="#6b7280"; }
+if (qv) {
+  const f = document.getElementById("vendor_no");
+  f.value = qv; f.readOnly = true;
+  f.style.background = "#f3f4f6"; f.style.color = "#6b7280";
+}
 </script>
 </body>
 </html>
