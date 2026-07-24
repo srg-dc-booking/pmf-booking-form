@@ -49,6 +49,9 @@
     .con-table td input:focus, .con-table td select:focus { outline: none; border-color: #2563eb; }
     .col-dc   { min-width: 110px; }
     .col-mhu  { min-width: 90px; }
+    .col-len  { min-width: 70px; }
+    .col-wid  { min-width: 70px; }
+    .col-vol  { min-width: 75px; }
     .col-qty  { min-width: 60px; }
     .col-dg   { min-width: 60px; }
     .col-un   { min-width: 80px; }
@@ -57,6 +60,7 @@
     .col-ht   { min-width: 70px; }
     .col-mx   { min-width: 60px; }
     .col-del  { min-width: 36px; text-align: center; }
+    .readonly-cell { background: #f3f4f6; color: #6b7280; }
     .del-btn { background: none; border: none; color: #ef4444; font-size: 1.15rem; cursor: pointer; padding: 0 .25rem; line-height: 1; }
     .del-btn:hover { color: #b91c1c; }
 
@@ -158,13 +162,16 @@
           <tr>
             <th class="col-dc">End DC Receiving</th>
             <th class="col-mhu">MHU Type</th>
+            <th class="col-len">Length (mm)</th>
+            <th class="col-wid">Width (mm)</th>
             <th class="col-qty">Qty</th>
             <th class="col-dg">DG (Y/N)</th>
             <th class="col-un">UN Number</th>
             <th class="col-cls">DG Class</th>
             <th class="col-wt">Weight (kg)</th>
             <th class="col-ht">Height (cm)</th>
-            <th class="col-mx">Mixed (Y/N)</th>
+            <th class="col-vol">Volume (m³)</th>
+            <th class="col-mx">Mixed Region</th>
             <th class="col-del"></th>
           </tr>
         </thead>
@@ -267,20 +274,46 @@ function addConRow(vals) {
   const v = vals || {};
   const mhuOpts = MHU_TYPES.map(t => `<option${(v.mhu||"")===t?" selected":""}>${t}</option>`).join("");
   const yn = (val, def) => val === "Y" ? ' selected' : (val === "N" ? '' : (def==="Y"?' selected':''));
+  const dims = MHU_DIMS[v.mhu] || {length:"",width:""};
   const tr = document.createElement("tr");
   tr.id = "cr"+r;
   tr.innerHTML = `
     <td class="col-dc"><select id="dc${r}"><option value="">—</option><option value="NSW"${ (v.dc||"")==="NSW"?" selected":""}>NSW</option><option value="VIC SPL"${ (v.dc||"")==="VIC SPL"?" selected":""}>VIC SPL</option><option value="VIC ANA"${ (v.dc||"")==="VIC ANA"?" selected":""}>VIC ANA</option><option value="QLD"${ (v.dc||"")==="QLD"?" selected":""}>QLD</option><option value="WA"${ (v.dc||"")==="WA"?" selected":""}>WA</option></select></td>
-    <td class="col-mhu"><select id="mhu${r}"><option value="">—</option>${mhuOpts}</select></td>
+    <td class="col-mhu"><select id="mhu${r}" onchange="onMHUChange(${r})"><option value="">—</option>${mhuOpts}</select></td>
+    <td class="col-len"><input type="text" id="len${r}" value="${dims.length}" readonly class="readonly-cell" tabindex="-1"></td>
+    <td class="col-wid"><input type="text" id="wid${r}" value="${dims.width}" readonly class="readonly-cell" tabindex="-1"></td>
     <td class="col-qty"><input type="number" id="qty${r}" value="${v.qty||1}" min="1" style="width:60px"></td>
     <td class="col-dg"><select id="dg${r}" onchange="toggleDG(${r})"><option value="N"${yn(v.dg,"N")}>N</option><option value="Y"${yn(v.dg,"Y")}>Y</option></select></td>
     <td class="col-un"><input type="text" id="un${r}" value="${v.un||""}" placeholder="UN1234" ${(v.dg!=="Y")?"disabled style='background:#f9fafb;color:#9ca3af'":""}></td>
     <td class="col-cls"><input type="text" id="cls${r}" value="${v.cls||""}" placeholder="e.g. 3" ${(v.dg!=="Y")?"disabled style='background:#f9fafb;color:#9ca3af'":""}></td>
     <td class="col-wt"><input type="number" id="wt${r}" value="${v.wt||""}" min="0" placeholder="kg"></td>
-    <td class="col-ht"><input type="number" id="ht${r}" value="${v.ht||""}" min="0" placeholder="cm"></td>
+    <td class="col-ht"><input type="number" id="ht${r}" value="${v.ht||""}" min="0" placeholder="cm" oninput="calcVolume(${r})"></td>
+    <td class="col-vol"><input type="text" id="vol${r}" value="" readonly class="readonly-cell" tabindex="-1"></td>
     <td class="col-mx"><select id="mx${r}"><option value="N"${yn(v.mx,"N")}>N</option><option value="Y"${yn(v.mx,"Y")}>Y</option></select></td>
     <td class="col-del"><button type="button" class="del-btn" onclick="document.getElementById('cr${r}').remove()">×</button></td>`;
   document.getElementById("con-tbody").appendChild(tr);
+}
+
+function onMHUChange(r) {
+  const mhu = document.getElementById("mhu"+r)?.value || "";
+  const dims = MHU_DIMS[mhu] || {length:"",width:""};
+  document.getElementById("len"+r).value = dims.length || "";
+  document.getElementById("wid"+r).value = dims.width || "";
+  calcVolume(r);
+}
+
+function calcVolume(r) {
+  const l = parseFloat(document.getElementById("len"+r)?.value) || 0;
+  const w = parseFloat(document.getElementById("wid"+r)?.value) || 0;
+  const h = parseFloat(document.getElementById("ht"+r)?.value) || 0;
+  const volEl = document.getElementById("vol"+r);
+  if (l && w && h) {
+    // L(mm) × W(mm) × H(cm→mm) / 1,000,000,000 = m³
+    const vol = (l * w * (h * 10)) / 1000000000;
+    volEl.value = vol.toFixed(4);
+  } else {
+    volEl.value = "";
+  }
 }
 
 function toggleDG(r) {
@@ -310,6 +343,7 @@ function getConRows() {
       dg_class:          document.getElementById("cls"+r)?.value.trim() || "",
       weight_kg:         document.getElementById("wt"+r)?.value || "",
       height_cm:         document.getElementById("ht"+r)?.value || "",
+      volume_m3:         document.getElementById("vol"+r)?.value || null,
       mixed:             document.getElementById("mx"+r)?.value || "N",
     };
   });
