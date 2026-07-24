@@ -119,15 +119,14 @@
         <div class="err" id="e-vendor_no">Vendor number is required.</div>
       </div>
       <div class="field">
-        <label>Vendor Name <span style="color:#ef4444">*</span></label>
+        <label>Vendor Name</label>
         <input type="text" id="vendor_name" placeholder="e.g. Acme Supplies Pty Ltd" />
-        <div class="err" id="e-vendor_name">Vendor name is required.</div>
       </div>
     </div>
     <div class="field">
-      <label>Confirmation Email <span style="color:#ef4444">*</span></label>
+      <label>Confirmation Email</label>
       <input type="email" id="email" placeholder="supplier@yourcompany.com" />
-      <div class="err" id="e-email">A valid email address is required.</div>
+      <p class="hint">Optional — will be automated in the app version.</p>
     </div>
     </div>
 
@@ -398,8 +397,6 @@ document.getElementById("frm").onsubmit = async function(e) {
   };
 
   show("vendor_no",          !document.getElementById("vendor_no").value.trim());
-  show("vendor_name",        !document.getElementById("vendor_name").value.trim());
-  show("email",              !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(document.getElementById("email").value.trim()));
   show("collection_state",   !document.getElementById("collection_state").value);
   const rows = getConRows();
   show("con",                rows.length === 0);
@@ -451,23 +448,18 @@ if (qv) {
 /* ─── Progressive Disclosure ───────────────────────────────── */
 function checkProgress() {
   const vno = document.getElementById("vendor_no").value.trim();
-  const vname = document.getElementById("vendor_name").value.trim();
-  const vemail = document.getElementById("email").value.trim();
-  const validEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(vemail);
 
-  // Step 2: show once vendor details filled
-  toggle("step-state", vno && vname && validEmail);
+  // Step 2: show once vendor number entered
+  toggle("step-state", !!vno);
 
   // Step 3: show once state selected
   const state = document.getElementById("collection_state").value;
-  toggle("step-consignment", vno && vname && validEmail && state);
+  toggle("step-consignment", vno && state);
 
-  // Step 4: show once at least 1 consignment row exists
+  // Step 4 & 5: show once at least 1 consignment row exists
   const hasRows = document.querySelectorAll("#con-tbody tr").length > 0;
-  toggle("step-cpo", vno && vname && validEmail && state && hasRows);
-
-  // Step 5: show once CPO or consignment present (CPO optional but section visible after rows)
-  toggle("step-date", vno && vname && validEmail && state && hasRows);
+  toggle("step-cpo", vno && state && hasRows);
+  toggle("step-date", vno && state && hasRows);
 }
 
 function toggle(id, show) {
