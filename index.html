@@ -90,6 +90,9 @@
     .success-box { background: #f0fdf4; border: 1.5px solid #86efac; border-radius: 9px; padding: 1.2rem 1.4rem; color: #15803d; margin-top: 1.4rem; display: none; }
     .success-box h3 { margin: 0 0 .5rem; font-size: 1rem; }
 
+    .form-step { transition: opacity .3s ease, max-height .3s ease; }
+    .form-step.hidden { display: none; }
+
     @media (max-width: 600px) {
       .card { padding: 1.4rem 1rem; }
       .two-col, .three-col { grid-template-columns: 1fr; }
@@ -106,7 +109,8 @@
 
   <form id="frm" novalidate>
 
-    <!-- VENDOR DETAILS -->
+    <!-- STEP 1: VENDOR DETAILS (always visible) -->
+    <div class="form-step" id="step-vendor">
     <p class="section-label">Vendor Details</p>
     <div class="two-col">
       <div class="field">
@@ -125,8 +129,10 @@
       <input type="email" id="email" placeholder="supplier@yourcompany.com" />
       <div class="err" id="e-email">A valid email address is required.</div>
     </div>
+    </div>
 
-    <!-- COLLECTION STATE -->
+    <!-- STEP 2: COLLECTION STATE -->
+    <div class="form-step hidden" id="step-state">
     <p class="section-label">Collection Details</p>
     <div class="field">
       <label>Select which state collection is required <span style="color:#ef4444">*</span></label>
@@ -137,8 +143,10 @@
       </select>
       <div class="err" id="e-collection_state">Please select a state.</div>
     </div>
+    </div>
 
-    <!-- CONSIGNMENT TABLE -->
+    <!-- STEP 3: CONSIGNMENT TABLE -->
+    <div class="form-step hidden" id="step-consignment">
     <p class="section-label">Consignment Details</p>
     <div class="info-banner">
       Enter each consignment line below. Use <strong>+ Add Row</strong> to add lines one at a time, or <strong>📋 Paste from Spreadsheet</strong> to bulk-import rows.
@@ -181,8 +189,10 @@
         <button type="button" class="btn-cancel" onclick="togglePaste('con-paste')">Cancel</button>
       </div>
     </div>
+    </div>
 
-    <!-- CPO NUMBERS -->
+    <!-- STEP 4: CPO NUMBERS -->
+    <div class="form-step hidden" id="step-cpo">
     <p class="section-label">CPO Numbers</p>
     <div class="field">
       <label>Enter or paste CPO numbers</label>
@@ -193,8 +203,10 @@
       </div>
       <p class="hint">Press <strong>Enter</strong> after each CPO, or paste a list (comma or newline separated) and click Add.</p>
     </div>
+    </div>
 
-    <!-- COLLECTION DATE -->
+    <!-- STEP 5: COLLECTION DATE + SUBMIT -->
+    <div class="form-step hidden" id="step-date">
     <p class="section-label">Requested Collection Date</p>
     <div class="warn-banner">
       ⏰ <strong>Next day collection request cut-off is 2:00 PM.</strong> Weekend collections are not accepted — please select a weekday.
@@ -205,7 +217,6 @@
       <div class="err" id="e-collection_date">Please select a valid weekday.</div>
     </div>
 
-    <!-- SPECIAL INSTRUCTIONS -->
     <p class="section-label">Special Instructions</p>
     <div class="field">
       <label>Special Instructions / Notes</label>
@@ -223,6 +234,8 @@
     </div>
 
     <button type="submit" class="submit-btn" id="sbtn">Submit Pick-Up Request</button>
+    </div>
+
   </form>
 
   <div class="success-box" id="ok">
@@ -258,7 +271,7 @@ function addConRow(vals) {
   const tr = document.createElement("tr");
   tr.id = "cr"+r;
   tr.innerHTML = `
-    <td class="col-dc"><input type="text" id="dc${r}" value="${v.dc||""}" placeholder="e.g. LAVERTON"></td>
+    <td class="col-dc"><select id="dc${r}"><option value="">—</option><option value="NSW"${ (v.dc||"")==="NSW"?" selected":""}>NSW</option><option value="VIC SPL"${ (v.dc||"")==="VIC SPL"?" selected":""}>VIC SPL</option><option value="VIC ANA"${ (v.dc||"")==="VIC ANA"?" selected":""}>VIC ANA</option><option value="QLD"${ (v.dc||"")==="QLD"?" selected":""}>QLD</option><option value="WA"${ (v.dc||"")==="WA"?" selected":""}>WA</option></select></td>
     <td class="col-mhu"><select id="mhu${r}"><option value="">—</option>${mhuOpts}</select></td>
     <td class="col-qty"><input type="number" id="qty${r}" value="${v.qty||1}" min="1" style="width:60px"></td>
     <td class="col-dg"><select id="dg${r}" onchange="toggleDG(${r})"><option value="N"${yn(v.dg,"N")}>N</option><option value="Y"${yn(v.dg,"Y")}>Y</option></select></td>
@@ -434,6 +447,45 @@ if (qv) {
   f.value = qv; f.readOnly = true;
   f.style.background = "#f3f4f6"; f.style.color = "#6b7280";
 }
+
+/* ─── Progressive Disclosure ───────────────────────────────── */
+function checkProgress() {
+  const vno = document.getElementById("vendor_no").value.trim();
+  const vname = document.getElementById("vendor_name").value.trim();
+  const vemail = document.getElementById("email").value.trim();
+  const validEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(vemail);
+
+  // Step 2: show once vendor details filled
+  toggle("step-state", vno && vname && validEmail);
+
+  // Step 3: show once state selected
+  const state = document.getElementById("collection_state").value;
+  toggle("step-consignment", vno && vname && validEmail && state);
+
+  // Step 4: show once at least 1 consignment row exists
+  const hasRows = document.querySelectorAll("#con-tbody tr").length > 0;
+  toggle("step-cpo", vno && vname && validEmail && state && hasRows);
+
+  // Step 5: show once CPO or consignment present (CPO optional but section visible after rows)
+  toggle("step-date", vno && vname && validEmail && state && hasRows);
+}
+
+function toggle(id, show) {
+  const el = document.getElementById(id);
+  if (show) el.classList.remove("hidden");
+  else el.classList.add("hidden");
+}
+
+// Listen for input changes across the form
+document.getElementById("frm").addEventListener("input", checkProgress);
+document.getElementById("frm").addEventListener("change", checkProgress);
+
+// Also watch for row additions/deletions in consignment table
+const progObserver = new MutationObserver(checkProgress);
+progObserver.observe(document.getElementById("con-tbody"), { childList: true });
+
+// Run on load (in case of pre-fill)
+checkProgress();
 </script>
 </body>
 </html>
